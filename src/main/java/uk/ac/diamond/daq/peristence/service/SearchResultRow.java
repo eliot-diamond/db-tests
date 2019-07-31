@@ -2,17 +2,17 @@ package uk.ac.diamond.daq.peristence.service;
 
 import java.util.Map;
 
-public class SearchResultRow<T> {
-    private T item;
+public class SearchResultRow {
+    private long persistenceId;
     private Map<SearchResultHeading, String> values;
 
-    public SearchResultRow(T item, Map<SearchResultHeading, String> values) {
-        this.item = item;
+    public SearchResultRow(long persistenceId, Map<SearchResultHeading, String> values) {
+        this.persistenceId = persistenceId;
         this.values = values;
     }
 
-    public T getItem() {
-        return item;
+    public long getPersistenceId() {
+        return persistenceId;
     }
 
     public Map<SearchResultHeading, String> getValues() {

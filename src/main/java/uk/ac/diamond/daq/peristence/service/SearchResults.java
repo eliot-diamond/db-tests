@@ -1,17 +1,18 @@
 package uk.ac.diamond.daq.peristence.service;
 
 import uk.ac.diamond.daq.peristence.annotation.Listable;
+import uk.ac.diamond.daq.peristence.data.PersistableItem;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public class SearchResults<T> {
+public class SearchResults {
     private Set<SearchResultHeading> headings = new HashSet<>();
-    private List<SearchResultRow<T>> rows = new ArrayList<>();
+    private List<SearchResultRow> rows = new ArrayList<>();
 
-    public void addResult(T item) throws PersistenceException {
+    public void addResult(PersistableItem item) throws PersistenceException {
         try {
             Map<SearchResultHeading, String> values = new HashMap<>();
             Class<?> clazz = item.getClass();
@@ -34,7 +35,7 @@ public class SearchResults<T> {
                 }
             }
 
-            rows.add(new SearchResultRow<>(item, values));
+            rows.add(new SearchResultRow(item.getId(), values));
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new PersistenceException("Unable to add search results", e);
         }
@@ -44,7 +45,7 @@ public class SearchResults<T> {
         return headings;
     }
 
-    public List<SearchResultRow<T>> getRows() {
+    public List<SearchResultRow> getRows() {
         return rows;
     }
 }

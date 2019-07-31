@@ -1,15 +1,26 @@
 package uk.ac.diamond.daq.peristence.data;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.peristence.annotation.Listable;
+import uk.ac.diamond.daq.peristence.annotation.Persisted;
 
-public class DiffractionScan extends Scan {
+import java.io.Serializable;
+
+public class DiffractionScan extends Scan implements Serializable {
+    private static final Logger log = LoggerFactory.getLogger(DiffractionScan.class);
+
+    @Persisted
     private int x;
+    @Persisted
     private int y;
+    @Persisted
     private int width;
+    @Persisted
     private int height;
 
-    public DiffractionScan(long id, String name, int x, int y, int width, int height) {
-        super(id, name);
+    public DiffractionScan(String name, int x, int y, int width, int height) {
+        super(name);
 
         this.x = x;
         this.y = y;
@@ -35,5 +46,10 @@ public class DiffractionScan extends Scan {
     @Listable(value = "Height", priority = 4)
     public int getHeight() {
         return height;
+    }
+
+    @Override
+    public void run() {
+        log.info("Running scan {} at x: {}, y: {} with width: {}, height: {}", getName(), x, y, width, height);
     }
 }
