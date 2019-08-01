@@ -8,15 +8,12 @@ import uk.ac.diamond.daq.peristence.data.PersistableItem;
 import uk.ac.diamond.daq.peristence.logging.impl.ItemContainer;
 import uk.ac.diamond.daq.peristence.service.PersistenceException;
 import uk.ac.diamond.daq.peristence.service.PersistenceService;
-import uk.ac.diamond.daq.peristence.service.SearchResults;
+import uk.ac.diamond.daq.peristence.service.SearchResult;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class InMemoryPersistenceService implements PersistenceService {
     @SuppressWarnings("unused")
@@ -25,44 +22,34 @@ public class InMemoryPersistenceService implements PersistenceService {
     private static long persistenceId = 0;
 
     private Set<ItemContainer> activeItems = new HashSet<>();
-    private Set<ItemContainer> archive = new HashSet<>();
+    private Set<ItemContainer> archivedItems = new HashSet<>();
 
     private static long getNextPersistenceId() {
         return persistenceId++;
     }
 
-    private PersistableItem getLatest(PersistableItem item) throws PersistenceException {
-        PersistableItem selectedItem = null;
-
+    private ItemContainer getLatest(PersistableItem item) throws PersistenceException {
         Class<?> clazz = item.getClass();
 
         for (ItemContainer itemContainer : activeItems) {
             if (itemContainer.getId() == item.getId()) {
-                selectedItem = itemContainer.getItem();
-                if (!clazz.isAssignableFrom(selectedItem.getClass())) {
+                Class<?> itemClass = itemContainer.getItem().getClass();
+                if (!clazz.isAssignableFrom(itemClass)) {
                     throw new PersistenceException(String.format("Archived item with ID %d is not of requested class %s, but is class %s",
-                            item.getId(), clazz.toGenericString(), selectedItem.getClass().toGenericString()));
+                            item.getId(), clazz.toGenericString(), itemClass.toGenericString()));
                 }
-                break;
+                return itemContainer;
             }
         }
-        return selectedItem;
+        return null;
     }
 
     private enum SaveAction {doNotSave, updateCurrent, createNewInstance}
 
-    private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem) throws PersistenceException {
-        SaveAction saveAction = SaveAction.doNotSave;
-
-        Class<?> itemClass = item.getClass();
-        Class<?> archivedItemClass = archivedItem.getClass();
-
-        if (!itemClass.equals(archivedItemClass)) {
-            throw new PersistenceException("Item class " + itemClass + " and archive item class " + archivedItemClass + "do not match");
-        }
-
+    private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem, Class<?> clazz,
+                                                  SaveAction saveAction) throws PersistenceException {
         try {
-            for (Field field : itemClass.getDeclaredFields()) {
+            for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Persisted.class)) {
                     field.setAccessible(true);
                     if (!field.get(item).equals(field.get(archivedItem))) {
@@ -77,15 +64,32 @@ public class InMemoryPersistenceService implements PersistenceService {
         } catch (IllegalAccessException e) {
             throw new PersistenceException("Failed to decode item", e);
         }
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+            return calculateChangeType(item, archivedItem, superClass, saveAction);
+        }
         return saveAction;
+    }
+
+    private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem) throws PersistenceException {
+        SaveAction saveAction = SaveAction.doNotSave;
+
+        Class<?> itemClass = item.getClass();
+        Class<?> archivedItemClass = archivedItem.getClass();
+
+        if (!itemClass.equals(archivedItemClass)) {
+            throw new PersistenceException("Item class " + itemClass + " and archive item class " + archivedItemClass + "do not match");
+        }
+
+        return calculateChangeType(item, archivedItem, itemClass, saveAction);
     }
 
     @Override
     public void save(PersistableItem item) throws PersistenceException {
         SaveAction saveAction;
-        PersistableItem storedItem = getLatest(item);
-        if (storedItem != null) {
-            saveAction = calculateChangeType(item, storedItem);
+        ItemContainer itemContainer = getLatest(item);
+        if (itemContainer != null) {
+            saveAction = calculateChangeType(item, itemContainer.getItem());
         } else {
             saveAction = SaveAction.createNewInstance;
         }
@@ -101,13 +105,24 @@ public class InMemoryPersistenceService implements PersistenceService {
             item.incrementVersion();
         }
 
+        delete(item);
         activeItems.add(new ItemContainer(item));
-        archive.add(new ItemContainer(item));
+        archivedItems.add(new ItemContainer(item));
     }
 
     @Override
-    public <T extends PersistableItem> SearchResults get(Class<T> clazz) throws PersistenceException {
-        SearchResults result = new SearchResults();
+    public void delete(long persistenceId) {
+        activeItems.removeIf(itemContainer -> itemContainer.getId() == persistenceId);
+    }
+
+    @Override
+    public void delete(PersistableItem item) {
+        delete(item.getId());
+    }
+
+    @Override
+    public <T extends PersistableItem> SearchResult get(Class<T> clazz) throws PersistenceException {
+        SearchResult result = new SearchResult();
 
         for (ItemContainer itemContainer : activeItems) {
             PersistableItem item = itemContainer.getItem();
@@ -147,9 +162,9 @@ public class InMemoryPersistenceService implements PersistenceService {
     }
 
     @Override
-    public <T extends PersistableItem> SearchResults get(Map<String, String> searchParameters, Class<T> clazz)
+    public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz)
             throws PersistenceException {
-        SearchResults results = new SearchResults();
+        SearchResult results = new SearchResult();
 
         for (ItemContainer itemContainer : activeItems) {
             PersistableItem item = itemContainer.getItem();
@@ -186,8 +201,20 @@ public class InMemoryPersistenceService implements PersistenceService {
     }
 
     @Override
+    public List<Long> getVersions(long persistenceId) {
+        List<Long> versions = new ArrayList<>();
+        for (ItemContainer itemContainer : archivedItems) {
+            if (itemContainer.getId() == persistenceId) {
+                versions.add(itemContainer.getVersion());
+            }
+        }
+        Collections.sort(versions);
+        return versions;
+    }
+
+    @Override
     public <T extends PersistableItem> T getArchive(long persistenceId, long version, Class<T> clazz) throws PersistenceException {
-        for (ItemContainer itemContainer : archive) {
+        for (ItemContainer itemContainer : archivedItems) {
             if (itemContainer.getId() == persistenceId && itemContainer.getVersion() == version) {
                 PersistableItem item = itemContainer.getItem();
                 if (clazz.isAssignableFrom(item.getClass())) {

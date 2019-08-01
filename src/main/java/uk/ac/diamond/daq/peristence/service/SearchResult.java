@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public class SearchResults {
+public class SearchResult {
     private Set<SearchResultHeading> headings = new HashSet<>();
     private List<SearchResultRow> rows = new ArrayList<>();
 
@@ -35,7 +35,7 @@ public class SearchResults {
                 }
             }
 
-            rows.add(new SearchResultRow(item.getId(), values));
+            rows.add(new SearchResultRow(item.getId(), item.getVersion(), values));
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new PersistenceException("Unable to add search results", e);
         }
