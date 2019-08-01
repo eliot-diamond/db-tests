@@ -14,6 +14,7 @@ import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -51,10 +52,15 @@ public class MongoDbPersistenceService extends PersistenceServiceBase {
         final Document document = Document.parse(jsonString);
 
         // Remove default id and get a unique one from MongoDB
-        if (document.getInteger(ID_FIELD) == PersistableItem.INVALID_ID) {
+        if (document.get(ID_FIELD) == PersistableItem.INVALID_ID) {
             final ObjectId objectId = new ObjectId();
             document.put(ID_FIELD, objectId);
-            item.setId(objectId.hashCode());
+
+            final String idString = objectId.toString();
+            final String idStringMongod = objectId.toStringMongod();
+            final String idStringHex = objectId.toHexString();
+
+            item.setId(new BigInteger("42"));
         }
 
         // Add class so we can reconstruct the object later
@@ -63,7 +69,7 @@ public class MongoDbPersistenceService extends PersistenceServiceBase {
     }
 
     @Override
-    public void delete(long persistenceId) {
+    public void delete(BigInteger persistenceId) {
 
     }
 
@@ -107,17 +113,17 @@ public class MongoDbPersistenceService extends PersistenceServiceBase {
     }
 
     @Override
-    public <T extends PersistableItem> T get(long persistenceId, Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> T get(BigInteger persistenceId, Class<T> clazz) throws PersistenceException {
         return null;
     }
 
     @Override
-    public List<Long> getVersions(long persistenceId) {
+    public List<Long> getVersions(BigInteger persistenceId) {
         return null;
     }
 
     @Override
-    public <T extends PersistableItem> T getArchive(long persistenceId, long version, Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) throws PersistenceException {
         return null;
     }
 

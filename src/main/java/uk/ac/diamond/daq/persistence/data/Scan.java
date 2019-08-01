@@ -5,6 +5,7 @@ import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public abstract class Scan extends PersistableItem implements Serializable {
     public static final String SEARCH_NAME_FIELD = "name";
@@ -27,4 +28,18 @@ public abstract class Scan extends PersistableItem implements Serializable {
     }
 
     public abstract void run();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Scan scan = (Scan) o;
+        return Objects.equals(name, scan.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
+    }
 }

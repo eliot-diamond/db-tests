@@ -6,6 +6,8 @@ import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
+import java.util.Objects;
+
 public class TomographyScan extends Scan {
     private static final Logger log = LoggerFactory.getLogger(TomographyScan.class);
 
@@ -41,5 +43,20 @@ public class TomographyScan extends Scan {
     @Override
     public void run() {
         log.info("Running scan {} (id: {}, version: {}) with {} frames over an angle of {}", getName(), getId(), getVersion(), frames, angle);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TomographyScan that = (TomographyScan) o;
+        return frames == that.frames &&
+                Double.compare(that.angle, angle) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), frames, angle);
     }
 }

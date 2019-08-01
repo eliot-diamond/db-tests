@@ -8,6 +8,7 @@ import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
 
 import java.lang.reflect.Field;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -22,12 +23,12 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
     }
 
     @Override
-    public List<LogToken> listChanges(long persistenceId, Class<?> clazz) throws PersistenceException {
+    public List<LogToken> listChanges(BigInteger persistenceId, Class<?> clazz) throws PersistenceException {
         List<LogToken> result = new ArrayList<>();
 
         for (LogToken logToken : logTokens) {
             for (ItemReference itemReference : logToken.getItemReferences()) {
-                if (persistenceId == itemReference.getId()) {
+                if (persistenceId.equals(itemReference.getId())) {
                     result.add(logToken);
                     break;
                 }

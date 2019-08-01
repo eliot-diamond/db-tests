@@ -4,11 +4,12 @@ import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 
 import java.io.*;
+import java.math.BigInteger;
 
 public class ItemContainer {
     private byte[] data;
 
-    private long id;
+    private BigInteger id;
 
     private long version;
 
@@ -25,7 +26,7 @@ public class ItemContainer {
         }
     }
 
-    public long getId() {
+    public BigInteger getId() {
         return id;
     }
 

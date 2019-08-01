@@ -12,6 +12,7 @@ import uk.ac.diamond.daq.persistence.service.SearchResult;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.util.*;
 
 public class InMemoryPersistenceService extends PersistenceServiceBase {
@@ -98,7 +99,7 @@ public class InMemoryPersistenceService extends PersistenceServiceBase {
         }
 
         if (saveAction == SaveAction.createNewInstance) {
-            item.setId(getNextPersistenceId());
+            item.setId(BigInteger.valueOf(getNextPersistenceId()));
             item.setVersion(0);
         } else if (saveAction == SaveAction.updateCurrent) {
             item.incrementVersion();
@@ -110,8 +111,8 @@ public class InMemoryPersistenceService extends PersistenceServiceBase {
     }
 
     @Override
-    public void delete(long persistenceId) {
-        activeItems.removeIf(itemContainer -> itemContainer.getId() == persistenceId);
+    public void delete(BigInteger persistenceId) {
+        activeItems.removeIf(itemContainer -> itemContainer.getId().equals(persistenceId));
     }
 
     @Override
@@ -187,9 +188,9 @@ public class InMemoryPersistenceService extends PersistenceServiceBase {
     }
 
     @Override
-    public <T extends PersistableItem> T get(long persistenceId, Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> T get(BigInteger persistenceId, Class<T> clazz) throws PersistenceException {
         for (ItemContainer itemContainer : activeItems) {
-            if (itemContainer.getId() == persistenceId) {
+            if (itemContainer.getId().equals(persistenceId)) {
                 PersistableItem item = itemContainer.getItem();
                 if (clazz.isAssignableFrom(item.getClass())) {
                     return clazz.cast(item);
@@ -200,10 +201,10 @@ public class InMemoryPersistenceService extends PersistenceServiceBase {
     }
 
     @Override
-    public List<Long> getVersions(long persistenceId) {
+    public List<Long> getVersions(BigInteger persistenceId) {
         List<Long> versions = new ArrayList<>();
         for (ItemContainer itemContainer : archivedItems) {
-            if (itemContainer.getId() == persistenceId) {
+            if (itemContainer.getId().equals(persistenceId)) {
                 versions.add(itemContainer.getVersion());
             }
         }
@@ -212,9 +213,9 @@ public class InMemoryPersistenceService extends PersistenceServiceBase {
     }
 
     @Override
-    public <T extends PersistableItem> T getArchive(long persistenceId, long version, Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) throws PersistenceException {
         for (ItemContainer itemContainer : archivedItems) {
-            if (itemContainer.getId() == persistenceId && itemContainer.getVersion() == version) {
+            if (itemContainer.getId().equals(persistenceId) && itemContainer.getVersion() == version) {
                 PersistableItem item = itemContainer.getItem();
                 if (clazz.isAssignableFrom(item.getClass())) {
                     return clazz.cast(item);

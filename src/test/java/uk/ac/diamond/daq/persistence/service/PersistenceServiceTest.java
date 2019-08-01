@@ -10,6 +10,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import uk.ac.diamond.daq.persistence.configuration.InMemoryConfiguration;
 import uk.ac.diamond.daq.persistence.data.*;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +83,7 @@ public class PersistenceServiceTest {
         searchParameters.put(Scan.SEARCH_NAME_FIELD, tomographyScanName1);
         searchResult = persistenceService.get(searchParameters, Scan.class);
         assertEquals("Only one item should be found", 1, searchResult.getRows().size());
-        long id = searchResult.getRows().get(0).getPersistenceId();
+        BigInteger id = searchResult.getRows().get(0).getPersistenceId();
         assertEquals("Wrong item found", tomographyScan1.getId(), id);
         printSearchResults("All Scan Items", searchResult);
 
