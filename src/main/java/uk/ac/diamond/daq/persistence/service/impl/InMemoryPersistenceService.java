@@ -7,7 +7,6 @@ import uk.ac.diamond.daq.persistence.annotation.Searchable;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.logging.impl.ItemContainer;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
-import uk.ac.diamond.daq.persistence.service.PersistenceService;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
 
 import java.lang.reflect.Field;
@@ -15,7 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public class InMemoryPersistenceService implements PersistenceService {
+public class InMemoryPersistenceService extends PersistenceServiceBase {
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(InMemoryPersistenceService.class);
 

@@ -1,5 +1,6 @@
 package uk.ac.diamond.daq.persistence.service;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -26,6 +27,14 @@ public class PersistenceServiceTest {
         ApplicationContext applicationContext = new AnnotationConfigApplicationContext(InMemoryConfiguration.class);
 
         persistenceService = applicationContext.getBean("persistenceService", PersistenceService.class);
+        persistenceService.connect();
+        persistenceService.dropAll();
+    }
+
+    @After
+    public void tearDown() {
+        persistenceService.dropAll();
+        persistenceService.disconnect();
     }
 
     private static void printSearchResults(String title, SearchResult searchResult) {
