@@ -15,6 +15,10 @@ public abstract class Scan extends PersistableItem implements Serializable {
     @Listable("Scan Name")
     private String name;
 
+    Scan() {
+        // default constructor for use by JSON
+    }
+
     Scan(String name) {
         this.name = name;
     }

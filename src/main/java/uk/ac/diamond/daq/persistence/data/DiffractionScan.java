@@ -19,6 +19,10 @@ public class DiffractionScan extends Scan implements Serializable {
     @Persisted
     private int height;
 
+    public DiffractionScan() {
+        // default constructor for use by JSON
+    }
+
     public DiffractionScan(String name, int x, int y, int width, int height) {
         super(name);
 

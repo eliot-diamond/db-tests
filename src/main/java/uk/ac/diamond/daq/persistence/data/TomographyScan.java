@@ -21,6 +21,10 @@ public class TomographyScan extends Scan {
     @Searchable("angle")
     private double angle;
 
+    public TomographyScan() {
+        // default constructor for use by JSON
+    }
+
     public TomographyScan(String name, int frames, double angle) {
         super(name);
 
@@ -31,6 +35,8 @@ public class TomographyScan extends Scan {
     public double getAngle() {
         return angle;
     }
+
+    public void setAngle(double angle) { this.angle = angle; }
 
     public int getFrames() {
         return frames;

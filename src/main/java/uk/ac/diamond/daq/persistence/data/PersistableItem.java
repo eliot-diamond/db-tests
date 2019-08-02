@@ -10,6 +10,8 @@ import java.util.Objects;
 public abstract class PersistableItem implements Serializable {
     public static final BigInteger INVALID_ID = new BigInteger("-1");
 
+    private static final int HEX_RADIX = 16;
+
     @Searchable("id")
     private BigInteger id;
 
@@ -28,6 +30,8 @@ public abstract class PersistableItem implements Serializable {
     public void setId(BigInteger id) {
         this.id = id;
     }
+
+    public void setId(String hexString) { this.id = new BigInteger(hexString, HEX_RADIX); }
 
     public void setVersion(long version) {
         this.version = version;
