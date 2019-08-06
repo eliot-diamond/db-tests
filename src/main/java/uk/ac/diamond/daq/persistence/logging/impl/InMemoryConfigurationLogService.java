@@ -28,7 +28,7 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
 
         for (LogToken logToken : logTokens) {
             for (ItemReference itemReference : logToken.getItemReferences()) {
-                if (persistenceId.equals(itemReference.getPersistenceId())) {
+                if (persistenceId.equals(itemReference.getId())) {
                     result.add(logToken);
                     break;
                 }

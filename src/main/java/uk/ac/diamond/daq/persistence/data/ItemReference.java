@@ -3,18 +3,19 @@ package uk.ac.diamond.daq.persistence.data;
 import java.math.BigInteger;
 
 public class ItemReference {
-    private BigInteger persistenceId;
+    private BigInteger id;
     private long version;
 
     private Class<? extends PersistableItem> itemClass;
 
-    public ItemReference(BigInteger persistenceId, long version, Class<? extends PersistableItem> itemClass) {
-        this.persistenceId = persistenceId;
+    public ItemReference(BigInteger id, long version, Class<? extends PersistableItem> itemClass) {
+        this.id = id;
+        this.version = version;
         this.itemClass = itemClass;
     }
 
-    public BigInteger getPersistenceId() {
-        return persistenceId;
+    public BigInteger getId() {
+        return id;
     }
 
     public long getVersion() {
