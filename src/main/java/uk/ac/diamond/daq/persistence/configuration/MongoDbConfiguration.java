@@ -6,13 +6,13 @@ import uk.ac.diamond.daq.persistence.logging.ConfigurationLogService;
 import uk.ac.diamond.daq.persistence.logging.impl.InMemoryConfigurationLogService;
 import uk.ac.diamond.daq.persistence.service.ExecutionService;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
-import uk.ac.diamond.daq.persistence.service.impl.MongoDbPersistenceService;
+import uk.ac.diamond.daq.persistence.service.impl.MongoDbJsonPersistenceService;
 
 @Configuration
 public class MongoDbConfiguration {
     @Bean
     PersistenceService persistenceService() {
-        return new MongoDbPersistenceService();
+        return new MongoDbJsonPersistenceService();
     }
 
     @Bean

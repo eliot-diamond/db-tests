@@ -15,8 +15,8 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-public class MongoDbPersistenceService extends PersistenceServiceBase {
-    private static final Logger logger = LoggerFactory.getLogger(MongoDbPersistenceService.class);
+public class MongoDbJsonPersistenceService extends JsonPersistenceService {
+    private static final Logger logger = LoggerFactory.getLogger(MongoDbJsonPersistenceService.class);
 
     private static final String DB_NAME = "db-tests";
     private static final String POJO_ID = "id";     // id field in our objects
@@ -30,20 +30,17 @@ public class MongoDbPersistenceService extends PersistenceServiceBase {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
     public void connect() {
         printMessage("Connecting...");
         mongoClient = MongoClients.create();
         database = mongoClient.getDatabase(DB_NAME);
     }
 
-    @Override
     public void disconnect() {
         printMessage("Disconnecting...");
         mongoClient.close();
     }
 
-    @Override
     public void dropAll() {
         for (String collection : database.listCollectionNames()) {
             database.getCollection(collection).drop();

@@ -6,13 +6,13 @@ import uk.ac.diamond.daq.persistence.logging.ConfigurationLogService;
 import uk.ac.diamond.daq.persistence.logging.impl.InMemoryConfigurationLogService;
 import uk.ac.diamond.daq.persistence.service.ExecutionService;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
-import uk.ac.diamond.daq.persistence.service.impl.InMemoryPersistenceService;
+import uk.ac.diamond.daq.persistence.service.impl.InMemoryJsonPersistenceService;
 
 @Configuration
 public class InMemoryConfiguration {
     @Bean
     PersistenceService persistenceService() {
-        return new InMemoryPersistenceService();
+        return new InMemoryJsonPersistenceService();
     }
 
     @Bean

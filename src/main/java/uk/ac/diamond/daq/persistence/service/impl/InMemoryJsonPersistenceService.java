@@ -1,10 +1,5 @@
 package uk.ac.diamond.daq.persistence.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
@@ -14,28 +9,20 @@ import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.Map.Entry;
 
-public class InMemoryPersistenceService extends PersistenceServiceBase {
+public class InMemoryJsonPersistenceService extends JsonPersistenceService {
     @SuppressWarnings("unused")
-    private static final Logger log = LoggerFactory.getLogger(InMemoryPersistenceService.class);
+    private static final Logger log = LoggerFactory.getLogger(InMemoryJsonPersistenceService.class);
 
-    private static long persistenceId = 0;
+    private static long persistenceId = 255;
 
     private Set<ItemContainer> activeItems = new HashSet<>();
     private Set<ItemContainer> archivedItems = new HashSet<>();
-
-    private ObjectMapper objectMapper;
-
-    public InMemoryPersistenceService() {
-        objectMapper = new ObjectMapper();
-    }
 
     private static long getNextPersistenceId() {
         return persistenceId++;
@@ -95,84 +82,6 @@ public class InMemoryPersistenceService extends PersistenceServiceBase {
         }
 
         return calculateChangeType(item, archivedItem, itemClass, saveAction);
-    }
-
-    private <T extends PersistableItem> T deserialize(ItemContainer itemContainer, Class<T> clazz) throws PersistenceException {
-        Map<Field, PersistableItem> fieldItems = new HashMap<>();
-
-        try {
-            ObjectNode baseNode = (ObjectNode) objectMapper.readTree(itemContainer.getJson());
-            Iterator<Entry<String, JsonNode>> iterator = baseNode.fields();
-            while (iterator.hasNext()) {
-                Entry<String, JsonNode> entry = iterator.next();
-                Field field = findFieldInClass(clazz, entry.getKey());
-                if (field == null) {
-                    throw new PersistenceException("Cannot find field " + entry.getKey() + " in " + clazz);
-                }
-                if (PersistableItem.class.isAssignableFrom(field.getType())) {
-                    BigInteger id = entry.getValue().get("id").bigIntegerValue();
-                    Class<? extends PersistableItem> fieldClass = (Class<? extends PersistableItem>) Class.forName(entry.getValue().get("class").asText());
-                    fieldItems.put(field, this.get(id, fieldClass));
-                    JsonNode fieldNode = JsonNodeFactory.instance.nullNode();
-                    baseNode.put(entry.getKey(), fieldNode);
-                }
-            }
-
-            PersistableItem item = objectMapper.treeToValue(baseNode, clazz);
-            for (Entry<Field, PersistableItem> entry : fieldItems.entrySet()) {
-                Field field = entry.getKey();
-                field.setAccessible(true);
-                PersistableItem fieldItem = entry.getValue();
-                field.set(item, fieldItem);
-            }
-            return (T) item;
-        } catch (IOException | ClassNotFoundException | IllegalAccessException e) {
-            throw new PersistenceException("Unable to deserialize item " + itemContainer.getId() + " class " + itemContainer.getItemClass(), e);
-        }
-    }
-
-    private static Field findFieldInClass(Class<?> clazz, String fieldName) {
-        for (Field field : clazz.getDeclaredFields()) {
-            if (field.getName().equals(fieldName)) {
-                return field;
-            }
-        }
-        Class<?> parent = clazz.getSuperclass();
-        if (parent != null && parent != Object.class) {
-            return findFieldInClass(parent, fieldName);
-        }
-        return null;
-    }
-
-    private String serialize(PersistableItem item) throws PersistenceException {
-        try {
-            if (log.isInfoEnabled()) {
-                ObjectNode baseNode = objectMapper.valueToTree(item);
-                Iterator<Entry<String, JsonNode>> iterator = baseNode.fields();
-                while (iterator.hasNext()) {
-                    Entry<String, JsonNode> entry = iterator.next();
-                    Field field = findFieldInClass(item.getClass(), entry.getKey());
-                    if (field == null) {
-                        throw new PersistenceException("Cannot find field " + entry.getKey() + " in " + item.getClass());
-                    }
-                    if (PersistableItem.class.isAssignableFrom(field.getType())) {
-                        field.setAccessible(true);
-                        PersistableItem fieldItem = (PersistableItem) field.get(item);
-                        ObjectNode newNode = baseNode.putObject(entry.getKey());
-                        newNode.put("id", fieldItem.getId());
-                        newNode.put("version", fieldItem.getVersion());
-                        newNode.put("class", fieldItem.getClass().getCanonicalName());
-                    }
-                }
-
-                String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(baseNode);
-                log.info("JSON for item {} class {}\n{}", item.getId(), item.getClass(), json);
-                return json;
-            }
-            return objectMapper.writeValueAsString(item);
-        } catch (JsonProcessingException | IllegalAccessException e) {
-            throw new PersistenceException("Unable to serialize item " + item.getId() + " class " + item.getClass(), e);
-        }
     }
 
     @Override

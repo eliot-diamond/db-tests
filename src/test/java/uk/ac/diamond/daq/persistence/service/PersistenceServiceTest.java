@@ -1,13 +1,8 @@
 package uk.ac.diamond.daq.persistence.service;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import uk.ac.diamond.daq.persistence.configuration.InMemoryConfiguration;
 import uk.ac.diamond.daq.persistence.data.*;
 
 import java.math.BigInteger;
@@ -21,21 +16,14 @@ import static org.junit.Assert.*;
 public class PersistenceServiceTest {
     private static final Logger log = LoggerFactory.getLogger(PersistenceServiceTest.class);
 
-    private PersistenceService persistenceService;
+    protected PersistenceService persistenceService;
 
-    @Before
     public void setup() {
-        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(InMemoryConfiguration.class);
 
-        persistenceService = applicationContext.getBean("persistenceService", PersistenceService.class);
-        persistenceService.connect();
-        persistenceService.dropAll();
     }
 
-    @After
     public void tearDown() {
-        persistenceService.dropAll();
-        persistenceService.disconnect();
+
     }
 
     private static void printSearchResults(String title, SearchResult searchResult) {
@@ -120,7 +108,7 @@ public class PersistenceServiceTest {
         assertEquals("Only one item should be found", 1, searchResult.getRows().size());
         id = searchResult.getRows().get(0).getPersistenceId();
         assertEquals("Wrong item found", trigger1.getId(), id);
-        Trigger trigger2 = persistenceService.get(id, LoadTrigger.class);
+        Trigger trigger2 = persistenceService.get(id, Trigger.class);
         trigger2.validate();
     }
 }

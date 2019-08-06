@@ -7,12 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface PersistenceService {
-    void connect();
-
-    void disconnect();
-
-    void dropAll();
-
     void save(PersistableItem item) throws PersistenceException;
 
     void delete(BigInteger persistenceId);
