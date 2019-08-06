@@ -1,5 +1,7 @@
 package uk.ac.diamond.daq.persistence.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Listable;
@@ -21,11 +23,9 @@ public class TomographyScan extends Scan {
     @Searchable("angle")
     private double angle;
 
-    public TomographyScan() {
-        // default constructor for use by JSON
-    }
-
-    public TomographyScan(String name, int frames, double angle) {
+    @JsonCreator
+    public TomographyScan(@JsonProperty("name") String name, @JsonProperty("frames") int frames,
+                          @JsonProperty("angle") double angle) {
         super(name);
 
         this.frames = frames;
@@ -35,8 +35,6 @@ public class TomographyScan extends Scan {
     public double getAngle() {
         return angle;
     }
-
-    public void setAngle(double angle) { this.angle = angle; }
 
     public int getFrames() {
         return frames;

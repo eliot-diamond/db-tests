@@ -1,5 +1,7 @@
 package uk.ac.diamond.daq.persistence.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Listable;
@@ -19,11 +21,9 @@ public class DiffractionScan extends Scan implements Serializable {
     @Persisted
     private int height;
 
-    public DiffractionScan() {
-        // default constructor for use by JSON
-    }
-
-    public DiffractionScan(String name, int x, int y, int width, int height) {
+    @JsonCreator
+    public DiffractionScan(@JsonProperty("name") String name, @JsonProperty("x") int x, @JsonProperty("y") int y,
+                           @JsonProperty("width") int width, @JsonProperty("height") int height) {
         super(name);
 
         this.x = x;

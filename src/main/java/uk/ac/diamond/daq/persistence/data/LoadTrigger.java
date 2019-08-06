@@ -1,5 +1,7 @@
 package uk.ac.diamond.daq.persistence.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
@@ -11,7 +13,9 @@ public class LoadTrigger extends Trigger implements Serializable {
     @Persisted
     private double maximumLoad;
 
-    public LoadTrigger(String name, Scan scan, double maximumLoad) {
+    @JsonCreator
+    public LoadTrigger(@JsonProperty("name") String name, @JsonProperty("scan") Scan scan,
+                       @JsonProperty("maximumLoad") double maximumLoad) {
         super(name, scan);
         this.maximumLoad = maximumLoad;
     }

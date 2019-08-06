@@ -78,6 +78,7 @@ public class PersistenceServiceTest {
         SearchResult searchResult = persistenceService.get(Scan.class);
         Set<SearchResultHeading> headings = searchResult.getHeadings();
         assertEquals("Not all headings created", 6, headings.size());
+        printSearchResults("All Scan Items", searchResult);
 
         Map<String, String> searchParameters = new HashMap<>();
         searchParameters.put(Scan.SEARCH_NAME_FIELD, tomographyScanName1);
@@ -85,10 +86,7 @@ public class PersistenceServiceTest {
         assertEquals("Only one item should be found", 1, searchResult.getRows().size());
         BigInteger id = searchResult.getRows().get(0).getPersistenceId();
         assertEquals("Wrong item found", tomographyScan1.getId(), id);
-        printSearchResults("All Scan Items", searchResult);
-
-        Trigger trigger = new LoadTrigger( "Load Trigger", tomographyScan1, 78);
-        persistenceService.save(trigger);
+        printSearchResults("Search for " + tomographyScanName1, searchResult);
 
         tomographyScan1.setFrames(101);
         persistenceService.save(tomographyScan1);
@@ -111,5 +109,18 @@ public class PersistenceServiceTest {
         tomographyScan2 = persistenceService.get(tomographyScan1.getId(), TomographyScan.class);
         assertNotSame("Different references required", tomographyScan1, tomographyScan2);
         assertEquals("Tomography Scan must equals()", tomographyScan1, tomographyScan2);
+
+        String triggerName = "Load Trigger";
+        Trigger trigger1 = new LoadTrigger(triggerName, tomographyScan1, 78);
+        persistenceService.save(trigger1);
+
+        searchParameters.put("name", triggerName);
+        searchResult = persistenceService.get(searchParameters, Trigger.class);
+        printSearchResults("Search for " + triggerName, searchResult);
+        assertEquals("Only one item should be found", 1, searchResult.getRows().size());
+        id = searchResult.getRows().get(0).getPersistenceId();
+        assertEquals("Wrong item found", trigger1.getId(), id);
+        Trigger trigger2 = persistenceService.get(id, LoadTrigger.class);
+        trigger2.validate();
     }
 }

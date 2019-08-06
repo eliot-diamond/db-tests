@@ -1,5 +1,6 @@
 package uk.ac.diamond.daq.persistence.logging;
 
+import uk.ac.diamond.daq.persistence.data.ItemReference;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 
 import java.util.Date;

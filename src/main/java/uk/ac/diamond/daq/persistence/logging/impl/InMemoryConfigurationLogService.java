@@ -1,8 +1,8 @@
 package uk.ac.diamond.daq.persistence.logging.impl;
 
+import uk.ac.diamond.daq.persistence.data.ItemReference;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.logging.ConfigurationLogService;
-import uk.ac.diamond.daq.persistence.logging.ItemReference;
 import uk.ac.diamond.daq.persistence.logging.LogToken;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
@@ -28,7 +28,7 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
 
         for (LogToken logToken : logTokens) {
             for (ItemReference itemReference : logToken.getItemReferences()) {
-                if (persistenceId.equals(itemReference.getId())) {
+                if (persistenceId.equals(itemReference.getPersistenceId())) {
                     result.add(logToken);
                     break;
                 }
@@ -50,7 +50,7 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
                 addItemReferences((PersistableItem) field.get(item), itemReferences);
             }
         }
-        itemReferences.add(new ItemReference(item.getId(), item.getVersion()));
+        itemReferences.add(new ItemReference(item.getId(), item.getVersion(), item.getClass()));
     }
 
     @Override
