@@ -1,11 +1,10 @@
 package uk.ac.diamond.daq.persistence.service;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import uk.ac.diamond.daq.persistence.configuration.InMemoryConfiguration;
 import uk.ac.diamond.daq.persistence.data.*;
 
 import java.math.BigInteger;
@@ -16,7 +15,7 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class PersistenceServiceTest {
+public abstract class PersistenceServiceTest {
     private static final Logger log = LoggerFactory.getLogger(PersistenceServiceTest.class);
 
     private static final String TOMOGRAPHY_SCAN_NAME_1 = "Tomo Scan 1";
@@ -28,20 +27,38 @@ public class PersistenceServiceTest {
     private DiffractionScan diffractionScan;
     private TomographyScan tomographyScan1;
 
+    @Before
     public void setup() throws PersistenceException {
-        final ApplicationContext applicationContext = new AnnotationConfigApplicationContext(InMemoryConfiguration.class);
-
-        persistenceService = applicationContext.getBean("persistenceService", PersistenceService.class);
+        beforeSetUp();
 
         // Add a scan of each type
         diffractionScan = new DiffractionScan("Diff 1", 0, 0, 10, 10);
         persistenceService.save(diffractionScan);
         tomographyScan1 = new TomographyScan(TOMOGRAPHY_SCAN_NAME_1, 100, 360.0);
         persistenceService.save(tomographyScan1);
+        afterSetUp();
     }
 
+    @After
     public void tearDown() {
+        beforeTearDown();
+        afterTearDown();
+    }
 
+    protected void beforeSetUp() {
+        // by default, do nothing
+    }
+
+    protected void afterSetUp() {
+        // by default, do nothing
+    }
+
+    protected void beforeTearDown() {
+        // by default, do nothing
+    }
+
+    protected void afterTearDown() {
+        // by default, do nothing
     }
 
     private static void printSearchResults(String title, SearchResult searchResult) {

@@ -1,8 +1,9 @@
 package uk.ac.diamond.daq.persistence.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.*;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -18,27 +19,18 @@ import java.util.Map;
 public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     private static final Logger logger = LoggerFactory.getLogger(MongoDbJsonPersistenceService.class);
 
-    private static final String DB_NAME = "db-tests";
     private static final String POJO_ID = "id";     // id field in our objects
     private static final String MONGO_ID = "_id";   // id field in database
     private static final String CLASS = "class";
 
     private static final int HEX_RADIX = 16;
 
-    private MongoClient mongoClient;
-    private MongoDatabase database;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public void connect() {
-        printMessage("Connecting...");
-        mongoClient = MongoClients.create();
-        database = mongoClient.getDatabase(DB_NAME);
-    }
+    private final MongoDatabase database;
 
-    public void disconnect() {
-        printMessage("Disconnecting...");
-        mongoClient.close();
+    public MongoDbJsonPersistenceService(MongoDatabase database) {
+        this.database = database;
     }
 
     public void dropAll() {
@@ -49,7 +41,7 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
 
     @Override
     public void save(PersistableItem item) throws PersistenceException {
-        final String jsonString = toJson(item);
+        final String jsonString = serialize(item);
         final Document document = Document.parse(jsonString);
         final BigInteger docId = getDocumentId(document);
 
@@ -80,12 +72,12 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     }
 
     @Override
-    public <T extends PersistableItem> SearchResult get(Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> SearchResult get(Class<T> clazz) {
         return convertDocumentsToSearchResult(getCollection(clazz).find());
     }
 
     @Override
-    public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz) {
         final Document searchDoc = new Document();
         for (Map.Entry<String, String> searchParam : searchParameters.entrySet()) {
             searchDoc.put(searchParam.getKey(), searchParam.getValue());
@@ -114,7 +106,7 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     }
 
     @Override
-    public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) throws PersistenceException {
+    public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) {
         return null;
     }
 
@@ -124,14 +116,13 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
      *
      * @param clazz The class whose collection is to be found
      * @return The corresponding collection
-     * @throws PersistenceException
      */
-    private MongoCollection getCollection(Class<? extends PersistableItem> clazz) throws PersistenceException {
+    private MongoCollection<Document> getCollection(Class<? extends PersistableItem> clazz) {
         Class<?> collectionClass = clazz;
         while (!(collectionClass.getSuperclass().equals(PersistableItem.class))) {
             collectionClass = collectionClass.getSuperclass();
         }
-        return database.getCollection(collectionClass.getName());
+        return database.getCollection(collectionClass.getSimpleName());
     }
 
     /**
@@ -139,18 +130,9 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
      *
      * @param item The item whose collection is to be found
      * @return The corresponding collection
-     * @throws PersistenceException
      */
-    private MongoCollection getCollection(PersistableItem item) throws PersistenceException {
+    private MongoCollection<Document> getCollection(PersistableItem item) {
         return getCollection(item.getClass());
-    }
-
-    private String toJson(PersistableItem item) throws PersistenceException {
-        try {
-            return new ObjectMapper().writeValueAsString(item);
-        } catch (JsonProcessingException e) {
-            throw new PersistenceException("Error serialising object to JSON", e);
-        }
     }
 
     /**
@@ -161,14 +143,15 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     private BigInteger getDocumentId(Document document) throws PersistenceException {
         final Object docId = document.get(POJO_ID);
         if (docId instanceof Integer) {
-            return BigInteger.valueOf(((Integer) docId).longValue());
+            return BigInteger.valueOf((Integer) docId);
         } else if (docId instanceof Long) {
-            return BigInteger.valueOf(((Long) docId).longValue());
+            return BigInteger.valueOf((Long) docId);
         } else if (docId instanceof BigInteger) {
             return (BigInteger) docId;
+        } else if (docId instanceof String) {
+            return new BigInteger((String) docId);
         } else if (docId instanceof ObjectId) {
-            final ObjectId objId = ((ObjectId) docId);
-            return objectIdToBigInteger(((ObjectId) docId));
+            return objectIdToBigInteger((ObjectId) docId);
         } else {
             throw new PersistenceException("Invalid document id " + docId);
         }
@@ -211,10 +194,17 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     }
 
     private ObjectId bigIntegerToObjectId(BigInteger bigInt) {
-        return new ObjectId(bigInt.toString(HEX_RADIX));
-    }
-
-    private void printMessage(String message) {
-        System.out.println(message);
+        final int idLength = 24;
+        String bigIntAsHex = bigInt.toString(HEX_RADIX);
+        final int padLength = idLength - bigIntAsHex.length();
+        if (padLength > 1) {
+            final StringBuilder paddedValue = new StringBuilder();
+            for (int i = 0; i < padLength; i++) {
+                paddedValue.append('0');
+            }
+            paddedValue.append(bigIntAsHex);
+            bigIntAsHex = paddedValue.toString();
+        }
+        return new ObjectId(bigIntAsHex);
     }
 }
