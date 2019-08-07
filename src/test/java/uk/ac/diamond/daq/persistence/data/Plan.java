@@ -1,11 +1,14 @@
 package uk.ac.diamond.daq.persistence.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Plan extends PersistableItem {
@@ -17,10 +20,21 @@ public class Plan extends PersistableItem {
     private String name;
 
     @Persisted
-    List<Trigger> triggers;
+    private List<Trigger> triggers;
+
+    @JsonCreator
+    public Plan(@JsonProperty("name") String name) {
+        this.name = name;
+
+        triggers = new ArrayList<>();
+    }
 
     public String getName() {
         return name;
+    }
+
+    public void addTrigger(Trigger trigger) {
+        triggers.add(trigger);
     }
 
     public List<Trigger> getTriggers() {

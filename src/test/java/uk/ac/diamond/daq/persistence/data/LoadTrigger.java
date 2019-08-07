@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 
-import java.io.Serializable;
-
-public class LoadTrigger extends Trigger implements Serializable {
+public class LoadTrigger extends Trigger {
     private static final Logger log = LoggerFactory.getLogger(LoadTrigger.class);
     @Persisted
     private double maximumLoad;

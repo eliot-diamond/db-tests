@@ -175,4 +175,22 @@ public abstract class PersistenceServiceTest {
         final Trigger trigger2 = persistenceService.get(id, LoadTrigger.class);
         trigger2.validate();
     }
+
+    @Test
+    public void createPlan() throws PersistenceException {
+        Trigger trigger1 = new LoadTrigger(LOAD_TRIGGER_NAME + " 1", tomographyScan1, 78);
+        persistenceService.save(trigger1);
+        Trigger trigger2 = new LoadTrigger(LOAD_TRIGGER_NAME + " 2", diffractionScan, 99);
+        persistenceService.save(trigger2);
+
+        String planName = "Plan 1";
+        Plan plan1 = new Plan(planName);
+        plan1.addTrigger(trigger1);
+        plan1.addTrigger(trigger2);
+        persistenceService.save(plan1);
+        Plan plan2 = persistenceService.get(plan1.getId(), Plan.class);
+        assertNotNull("Failed to find Plan " + plan1.getName(), plan2);
+        assertEquals("Trigger 1", trigger1, plan2.getTriggers().get(0));
+        assertEquals("Trigger 1 Scan", tomographyScan1, plan2.getTriggers().get(0).getScan());
+    }
 }

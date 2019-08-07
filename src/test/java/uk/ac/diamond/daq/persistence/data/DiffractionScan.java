@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 
-import java.io.Serializable;
-
-public class DiffractionScan extends Scan implements Serializable {
+public class DiffractionScan extends Scan {
     private static final Logger log = LoggerFactory.getLogger(DiffractionScan.class);
 
     @Persisted

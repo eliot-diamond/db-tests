@@ -4,9 +4,7 @@ import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
-import java.io.Serializable;
-
-public abstract class Trigger extends PersistableItem implements Serializable {
+public abstract class Trigger extends PersistableItem {
     private Scan scan;
 
     @Persisted(key = true)

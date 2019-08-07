@@ -4,10 +4,9 @@ import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
-import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class Scan extends PersistableItem implements Serializable {
+public abstract class Scan extends PersistableItem {
     public static final String SEARCH_NAME_FIELD = "name";
 
     @Persisted(key = true)
