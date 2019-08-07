@@ -12,7 +12,9 @@ import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
 
+import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -41,24 +43,65 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
 
     @Override
     public void save(PersistableItem item) throws PersistenceException {
+        setIds(item);
         final String jsonString = serialize(item);
         final Document document = Document.parse(jsonString);
-        final BigInteger docId = getDocumentId(document);
-
-        if (docId.equals(PersistableItem.INVALID_ID)) {
-            // No id has been set for this object, so get a new one from MongoDB
-            final ObjectId objectId = new ObjectId();
-            document.put(MONGO_ID, objectId);
-            item.setId(new BigInteger(objectId.toHexString(), HEX_RADIX));
-        } else {
-            document.put(MONGO_ID, bigIntegerToObjectId(item.getId()));
-        }
 
         // Remove our id from the document because we have set the Mongo id
-        document.remove(POJO_ID);
+//        document.remove(POJO_ID);
         // Add class so we can reconstruct the object later
         document.append(CLASS, item.getClass().getName());
         getCollection(item).insertOne(document);
+    }
+
+    /**
+     * Recursively set ids in a {@link PersistableItem} that are not yet set
+     *
+     * @param item The {@link PersistableItem} to process
+     */
+    private void setIds(PersistableItem item) throws PersistenceException {
+        if (item == null) {
+            return;
+        }
+        // Process the top-level id
+        if (item.getId().equals(PersistableItem.INVALID_ID)) {
+            final ObjectId objectId = new ObjectId();
+            item.setId(new BigInteger(objectId.toHexString(), HEX_RADIX));
+        }
+        // Loop over fields
+        final Class<? extends PersistableItem> classObject = item.getClass();
+        final Field[] fields = classObject.getFields();
+        for (Field field : fields) {
+            try {
+                final Class<?> fieldClass = field.getType();
+                if (Collection.class.isAssignableFrom(fieldClass)) {
+                    setIds((Collection) field.get(item));
+                } else if (PersistableItem.class.isAssignableFrom(fieldClass)) {
+                    setIds((PersistableItem) field.get(item));
+                }
+            } catch (Exception e) {
+                throw new PersistenceException("Error setting item id", e);
+            }
+        }
+    }
+
+    /**
+     * Recursive over a {@link Collection} setting ids in any {@link PersistableItem}s found
+     *
+     * @param itemCollection The {@link Collection} to process
+     */
+    private void setIds(Collection<?> itemCollection) throws PersistenceException {
+        if (itemCollection == null) {
+            return;
+        }
+        for (Object item : itemCollection) {
+            final Class itemClass = item.getClass();
+            if (Collection.class.isAssignableFrom(itemClass)) {
+                setIds((Collection) item);
+            } else if (PersistableItem.class.isAssignableFrom(itemClass)) {
+                setIds((PersistableItem) item);
+            }
+        }
     }
 
     @Override
@@ -108,6 +151,11 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     @Override
     public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) {
         return null;
+    }
+
+    @Override
+    protected String getIdString() {
+        return "_id";
     }
 
     /**
