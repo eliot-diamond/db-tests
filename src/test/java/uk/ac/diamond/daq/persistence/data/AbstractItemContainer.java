@@ -4,26 +4,26 @@ import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
-public abstract class Trigger extends PersistableItem {
-    private Scan scan;
+public abstract class AbstractItemContainer extends PersistableItem {
+    private AbstractItem abstractItem;
 
     @Persisted(key = true)
     @Searchable("name")
     @Listable("Name")
     private String name;
 
-    Trigger(String name, Scan scan) {
+    AbstractItemContainer(String name, AbstractItem abstractItem) {
         this.name = name;
-        this.scan = scan;
+        this.abstractItem = abstractItem;
     }
 
     public String getName() {
         return name;
     }
 
-    public Scan getScan() {
-        return scan;
+    public AbstractItem getAbstractItem() {
+        return abstractItem;
     }
 
-    public abstract void validate ();
+    public abstract void execute();
 }

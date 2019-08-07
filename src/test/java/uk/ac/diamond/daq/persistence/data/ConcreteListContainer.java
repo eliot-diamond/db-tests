@@ -11,41 +11,41 @@ import uk.ac.diamond.daq.persistence.annotation.Searchable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Plan extends PersistableItem {
-    private static final Logger log = LoggerFactory.getLogger(Plan.class);
+public class ConcreteListContainer extends PersistableItem {
+    private static final Logger log = LoggerFactory.getLogger(ConcreteListContainer.class);
 
     @Persisted(key = true)
     @Searchable("name")
-    @Listable("Plan Name")
+    @Listable("Name")
     private String name;
 
     @Persisted
-    private List<Trigger> triggers;
+    private List<AbstractItemContainer> abstractItemContainers;
 
     @JsonCreator
-    public Plan(@JsonProperty("name") String name) {
+    public ConcreteListContainer(@JsonProperty("name") String name) {
         this.name = name;
 
-        triggers = new ArrayList<>();
+        abstractItemContainers = new ArrayList<>();
     }
 
     public String getName() {
         return name;
     }
 
-    public void addTrigger(Trigger trigger) {
-        triggers.add(trigger);
+    public void addTrigger(AbstractItemContainer abstractItemContainer) {
+        abstractItemContainers.add(abstractItemContainer);
     }
 
-    public List<Trigger> getTriggers() {
-        return triggers;
+    public List<AbstractItemContainer> getAbstractItemContainers() {
+        return abstractItemContainers;
     }
 
     public void start() {
         log.info("Started plan {} (id: {}, version: {})", name, getId(), getVersion());
 
-        for (Trigger trigger : triggers) {
-            trigger.validate();
+        for (AbstractItemContainer abstractItemContainer : abstractItemContainers) {
+            abstractItemContainer.execute();
         }
     }
 }

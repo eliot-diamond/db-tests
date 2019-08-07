@@ -6,19 +6,15 @@ import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 import java.util.Objects;
 
-public abstract class Scan extends PersistableItem {
+public abstract class AbstractItem extends PersistableItem {
     public static final String SEARCH_NAME_FIELD = "name";
 
     @Persisted(key = true)
     @Searchable(SEARCH_NAME_FIELD)
-    @Listable("Scan Name")
+    @Listable("Name")
     private String name;
 
-    Scan() {
-        // default constructor for use by JSON
-    }
-
-    Scan(String name) {
+    AbstractItem(String name) {
         this.name = name;
     }
 
@@ -37,8 +33,8 @@ public abstract class Scan extends PersistableItem {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
-        Scan scan = (Scan) o;
-        return Objects.equals(name, scan.name);
+        AbstractItem abstractItem = (AbstractItem) o;
+        return Objects.equals(name, abstractItem.name);
     }
 
     @Override
