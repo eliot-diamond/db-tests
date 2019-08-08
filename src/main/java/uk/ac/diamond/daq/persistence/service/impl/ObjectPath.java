@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 class ObjectPath {
     private enum PathElementType {
@@ -68,7 +69,13 @@ class ObjectPath {
         while (iterator.hasNext()) {
             PathElement pathElement = iterator.next();
             Class<?> clazz = lastObject.getClass();
-            if (pathElement.type == PathElementType.field) {
+            if (Map.class.isAssignableFrom(clazz)) {
+                if (!iterator.hasNext()) {
+                    ((Map) lastObject).put(pathElement.fieldName, fieldItem);
+                } else {
+                    throw new PersistenceException("Cannot find stuff again");
+                }
+            } else if (pathElement.type == PathElementType.field) {
                 Field field = JsonPersistenceService.findFieldInClass(clazz, pathElement.fieldName);
                 field.setAccessible(true);
                 Object currentObject = field.get(lastObject);

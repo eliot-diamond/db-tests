@@ -26,7 +26,7 @@ public abstract class AbstractItem extends PersistableItem {
         this.name = name;
     }
 
-    public abstract void run();
+    public abstract void execute();
 
     @Override
     public boolean equals(Object o) {

@@ -162,8 +162,26 @@ public abstract class PersistenceServiceTest {
         concreteListContainer1.addTrigger(abstractItemContainer2);
         persistenceService.save(concreteListContainer1);
         ConcreteListContainer concreteListContainer2 = persistenceService.get(concreteListContainer1.getId(), ConcreteListContainer.class);
+        concreteListContainer2.execute();
         assertNotNull("Failed to find Plan " + concreteListContainer1.getName(), concreteListContainer2);
         assertEquals("Trigger 1", abstractItemContainer1, concreteListContainer2.getAbstractItemContainers().get(0));
         assertEquals("Trigger 1 Scan", concreteItemB, concreteListContainer2.getAbstractItemContainers().get(0).getAbstractItem());
     }
+
+    @Test
+    public void saveMap() throws PersistenceException {
+        ConcreteItemA concreteItemA = new ConcreteItemA("Item A", 23, 45);
+        persistenceService.save(concreteItemA);
+        ConcreteItemB concreteItemB = new ConcreteItemB("Item B", 34, 7.7);
+        persistenceService.save(concreteItemB);
+
+        ConcreteMapContainer concreteMapContainer1 = new ConcreteMapContainer("Map Container");
+        concreteMapContainer1.addItem("itemA", concreteItemA);
+        concreteMapContainer1.addItem("itemB", concreteItemB);
+        persistenceService.save(concreteMapContainer1);
+
+        ConcreteMapContainer concreteMapContainer2 = persistenceService.get(concreteMapContainer1.getId(), ConcreteMapContainer.class);
+        concreteMapContainer2.execute();
+    }
+
 }

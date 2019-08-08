@@ -21,7 +21,7 @@ public class ConcreteItemContainer extends AbstractItemContainer {
     @Override
     public void execute() {
         log.info("Trigger {} (id: {}, version: {}) property4: {}", getName(), getId(), getVersion(), property4);
-        getAbstractItem().run();
+        getAbstractItem().execute();
     }
 
     public double getProperty4() {

@@ -35,8 +35,8 @@ public class ConcreteItemA extends AbstractItem {
     }
 
     @Override
-    public void run() {
-        log.info("Executing ConcreteItem2 {} (id: {}, version: {}) property1: {}, property3: {}", getId(), getVersion(),
-                getName(), property1, property2);
+    public void execute() {
+        log.info("Executing ConcreteItemA {} (id: {}, version: {}) property1: {}, property3: {}", getName(), getId(),
+                getVersion(), property1, property2);
     }
 }

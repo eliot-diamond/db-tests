@@ -41,7 +41,7 @@ public class ConcreteListContainer extends PersistableItem {
         return abstractItemContainers;
     }
 
-    public void start() {
+    public void execute() {
         log.info("Started plan {} (id: {}, version: {})", name, getId(), getVersion());
 
         for (AbstractItemContainer abstractItemContainer : abstractItemContainers) {
