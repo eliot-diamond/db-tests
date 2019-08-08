@@ -1,9 +1,9 @@
 package uk.ac.diamond.daq.persistence.logging.impl;
 
 import uk.ac.diamond.daq.persistence.data.ItemReference;
+import uk.ac.diamond.daq.persistence.data.LogToken;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.logging.ConfigurationLogService;
-import uk.ac.diamond.daq.persistence.logging.LogToken;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
 
@@ -23,7 +23,7 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
     }
 
     @Override
-    public List<LogToken> listChanges(BigInteger persistenceId, Class<?> clazz) throws PersistenceException {
+    public List<LogToken> listChanges(BigInteger persistenceId) throws PersistenceException {
         List<LogToken> result = new ArrayList<>();
 
         for (LogToken logToken : logTokens) {
@@ -36,11 +36,6 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
         }
 
         return result;
-    }
-
-    @Override
-    public List<LogToken> listChanges(PersistableItem item) throws PersistenceException {
-        return listChanges(item.getId(), item.getClass());
     }
 
     private static void addItemReferences(PersistableItem item, List<ItemReference> itemReferences) throws IllegalAccessException {

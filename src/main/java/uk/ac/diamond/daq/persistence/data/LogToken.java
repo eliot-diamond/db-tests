@@ -1,7 +1,4 @@
-package uk.ac.diamond.daq.persistence.logging;
-
-import uk.ac.diamond.daq.persistence.data.ItemReference;
-import uk.ac.diamond.daq.persistence.data.PersistableItem;
+package uk.ac.diamond.daq.persistence.data;
 
 import java.util.Date;
 import java.util.List;
