@@ -1,6 +1,7 @@
 package uk.ac.diamond.daq.persistence.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -14,16 +15,18 @@ import uk.ac.diamond.daq.persistence.service.SearchResult;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     private static final Logger logger = LoggerFactory.getLogger(MongoDbJsonPersistenceService.class);
 
     private static final String POJO_ID = "id";     // id field in our objects
     private static final String MONGO_ID = "_id";   // id field in database
-    private static final String CLASS = "class";
+    private static final String CLASSES = "classes";
+
+    // Regexs for converting id in Java format to Mongo format
+    private static final String JAVA_TO_MONGO_PATTERN = "\"id\"[ ]*:[ ]*\"([0-9a-fA-F]{24})\"";
+    private static final String JAVA_TO_MONGO_REPLACEMENT = "\"_id\" : \\{\"\\$oid\" : \"$1\"\\}";
 
     private static final int HEX_RADIX = 16;
 
@@ -45,12 +48,17 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     public void save(PersistableItem item) throws PersistenceException {
         setIds(item);
         final String jsonString = serialize(item);
-        final Document document = Document.parse(jsonString);
+        final String jsonWithMongoId = jsonString.replaceAll(JAVA_TO_MONGO_PATTERN, JAVA_TO_MONGO_REPLACEMENT);
+        final Document document = Document.parse(jsonWithMongoId);
 
-        // Remove our id from the document because we have set the Mongo id
-//        document.remove(POJO_ID);
-        // Add class so we can reconstruct the object later
-        document.append(CLASS, item.getClass().getName());
+        // Add class hierarchy so we can search for subclasses and reconstruct the object later
+        final List<String> classes = new ArrayList<>();
+        Class<?> objectClass = item.getClass();
+        while (!objectClass.equals(Object.class)) {
+            classes.add(objectClass.getName());
+            objectClass = objectClass.getSuperclass();
+        }
+        document.append(CLASSES, classes);
         getCollection(item).insertOne(document);
     }
 
@@ -114,33 +122,31 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
 
     }
 
+    private <T extends PersistableItem> FindIterable<Document> searchForDocuments(Map<String, ? extends Object> searchParameters, Class<T> clazz) {
+        final Document searchDoc = new Document();
+        for (Map.Entry<String, ? extends Object> searchParam : searchParameters.entrySet()) {
+            searchDoc.put(searchParam.getKey(), searchParam.getValue());
+        }
+        // Search for the name of the requested class anywhere in the class hierarchy field
+        searchDoc.put(CLASSES, clazz.getName());
+        return getCollection(clazz).find(searchDoc);
+    }
+
     @Override
     public <T extends PersistableItem> SearchResult get(Class<T> clazz) {
-        return convertDocumentsToSearchResult(getCollection(clazz).find());
+        return get(Collections.emptyMap(), clazz);
     }
 
     @Override
     public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz) {
-        final Document searchDoc = new Document();
-        for (Map.Entry<String, String> searchParam : searchParameters.entrySet()) {
-            searchDoc.put(searchParam.getKey(), searchParam.getValue());
-        }
-        searchDoc.put(CLASS, clazz.getName());
-        return convertDocumentsToSearchResult(getCollection(clazz).find(searchDoc));
+        return convertDocumentsToSearchResult(searchForDocuments(searchParameters, clazz));
     }
 
     @Override
     public <T extends PersistableItem> T get(BigInteger persistenceId, Class<T> clazz) throws PersistenceException {
-        final Document searchDoc = new Document();
-        searchDoc.put(MONGO_ID, bigIntegerToObjectId(persistenceId));
-        searchDoc.put(CLASS, clazz.getName());
-
-        final FindIterable<Document> documents = getCollection(clazz).find(searchDoc);
-        final Document result = documents.first();
-        if (result == null) {
-            throw new PersistenceException("No result found for id " + persistenceId.toString());
-        }
-        return convertDocumentToObject(result);
+        final Map<String, Object> idParam = ImmutableMap.of(MONGO_ID, bigIntegerToObjectId(persistenceId));
+        final FindIterable<Document> documents = searchForDocuments(idParam, clazz);
+        return convertDocumentToObject(documents.first());
     }
 
     @Override
@@ -151,11 +157,6 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
     @Override
     public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) {
         return null;
-    }
-
-    @Override
-    protected String getIdString() {
-        return "_id";
     }
 
     /**
@@ -207,8 +208,8 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
 
     private <T extends PersistableItem> T convertDocumentToObject(Document document) throws PersistenceException {
         // Save class name and remove from document, as it does not appear in the object
-        final String className = (String) document.get(CLASS);
-        document.remove(CLASS);
+        final String className = ((List<String>) document.get(CLASSES)).get(0);
+        document.remove(CLASSES);
 
         // Move MongoDBs object id to GDAs id field
         final ObjectId id = document.getObjectId(MONGO_ID);
