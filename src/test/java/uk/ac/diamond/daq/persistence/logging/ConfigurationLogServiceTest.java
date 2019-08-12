@@ -10,16 +10,13 @@ import uk.ac.diamond.daq.persistence.service.PersistenceService;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
 public class ConfigurationLogServiceTest {
     ConfigurationLogService configurationLogService;
     PersistenceService persistenceService;
 
     @Test
     public void logFirstSimpleItem() throws PersistenceException {
-        AbstractItem item = new ConcreteItemA("Item 1", 2, 3);
+        AbstractItem item = new ConcreteItemA("Item 1", 2, 3, "4");
         configurationLogService.logConfigurationChanges(item, "first ever log event");
 
         assertNotEquals("Item has been saved", item.getId(), PersistableItem.INVALID_ID);

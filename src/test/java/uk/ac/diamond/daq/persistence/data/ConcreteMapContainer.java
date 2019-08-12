@@ -30,6 +30,10 @@ public class ConcreteMapContainer extends PersistableItem {
         map = new HashMap<>();
     }
 
+    public AbstractItem getItem(String key) {
+        return map.get(key);
+    }
+
     public String getName() {
         return name;
     }
