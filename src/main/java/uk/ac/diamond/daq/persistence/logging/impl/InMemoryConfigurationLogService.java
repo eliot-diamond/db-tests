@@ -6,6 +6,7 @@ import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.logging.ConfigurationLogService;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
+import uk.ac.diamond.daq.persistence.service.impl.JsonPersistenceService;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
@@ -38,22 +39,29 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
         return result;
     }
 
-    private static void addItemReferences(PersistableItem item, List<ItemReference> itemReferences) throws IllegalAccessException {
-        Class<?> clazz = item.getClass();
+    private static void addItemReferences(Object object, Class clazz, Set<ItemReference> itemReferences) throws IllegalAccessException {
+        if (PersistableItem.class.isAssignableFrom(clazz)) {
+            PersistableItem item = (PersistableItem) object;
+            itemReferences.add(new ItemReference(item.getId(), item.getVersion(), item.getClass()));
+        }
         for (Field field : clazz.getDeclaredFields()) {
-            if (field.getType() == PersistableItem.class) {
-                addItemReferences((PersistableItem) field.get(item), itemReferences);
+            if (JsonPersistenceService.isPersistable(field)) {
+                field.setAccessible(true);
+                addItemReferences(field.get(object), field.getType(), itemReferences);
             }
         }
-        itemReferences.add(new ItemReference(item.getId(), item.getVersion(), item.getClass()));
+        Class<?> parent = clazz.getSuperclass();
+        if (parent != null) {
+            addItemReferences(object, parent, itemReferences);
+        }
     }
 
     @Override
     public LogToken logConfigurationChanges(PersistableItem item, String description) throws PersistenceException {
         persistenceService.save(item);
-        List<ItemReference> itemReferences = new ArrayList<>();
+        Set<ItemReference> itemReferences = new HashSet<>();
         try {
-            addItemReferences(item, itemReferences);
+            addItemReferences(item, item.getClass(), itemReferences);
         } catch (IllegalAccessException e) {
             throw new PersistenceException("Unable to add item references", e);
         }

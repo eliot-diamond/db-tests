@@ -1,16 +1,16 @@
 package uk.ac.diamond.daq.persistence.data;
 
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 public class LogToken extends PersistableItem {
     private Date date;
 
     private String description;
 
-    private List<ItemReference> itemReferences;
+    private Set<ItemReference> itemReferences;
 
-    public LogToken(String description, List<ItemReference> itemReferences) {
+    public LogToken(String description, Set<ItemReference> itemReferences) {
         this.date = new Date();
         this.description = description;
         this.itemReferences = itemReferences;
@@ -24,7 +24,7 @@ public class LogToken extends PersistableItem {
         return description;
     }
 
-    public List<ItemReference> getItemReferences() {
+    public Set<ItemReference> getItemReferences() {
         return itemReferences;
     }
 }

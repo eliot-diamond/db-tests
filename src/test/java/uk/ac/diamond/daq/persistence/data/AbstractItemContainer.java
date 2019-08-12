@@ -5,6 +5,7 @@ import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 public abstract class AbstractItemContainer extends PersistableItem {
+    @Persisted
     private AbstractItem abstractItem;
     public static final String CONTAINER_NAME = "name";
 
