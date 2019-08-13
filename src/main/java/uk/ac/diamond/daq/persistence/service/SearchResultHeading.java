@@ -22,6 +22,14 @@ public class SearchResultHeading {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof SearchResultHeading) {
+            return (title.equals(((SearchResultHeading) obj).title));
+        }
+        return super.equals(obj);
+    }
+
+    @Override
     public int hashCode() {
         return title.hashCode();
     }

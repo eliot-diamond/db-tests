@@ -12,7 +12,7 @@ public class ConcreteItemBsubA extends ConcreteItemB {
     public static final String UNIQUE_FIELD = "prop4";
     private static final Logger log = LoggerFactory.getLogger(ConcreteItemBsubA.class);
     @Persisted
-    @Searchable("UNIQUE_FIELD")
+    @Searchable(UNIQUE_FIELD)
     private int property4;
 
     @JsonCreator

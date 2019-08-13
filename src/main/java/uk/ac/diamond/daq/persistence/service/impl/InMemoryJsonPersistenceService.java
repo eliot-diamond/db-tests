@@ -88,7 +88,7 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         SaveAction saveAction;
         ItemContainer itemContainer = getLatest(item);
         if (itemContainer != null) {
-            saveAction = calculateChangeType(item, deserialize(itemContainer, itemContainer.getItemClass()));
+            saveAction = calculateChangeType(item, deserialize(itemContainer.getJson(), itemContainer.getItemClass()));
         } else {
             saveAction = SaveAction.createNewInstance;
         }
@@ -126,14 +126,14 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
 
         for (ItemContainer itemContainer : activeItems) {
             if (clazz.isAssignableFrom(itemContainer.getItemClass())) {
-                result.addResult(deserialize(itemContainer, itemContainer.getItemClass()));
+                result.addResult(deserialize(itemContainer.getJson(), itemContainer.getItemClass()));
             }
         }
 
         return result;
     }
 
-    private static void getSearchableValues (PersistableItem item, Class<?> clazz, Map<String, String> searchableValues)
+    private static void getSearchableValues(Object item, Class<?> clazz, Map<String, String> searchableValues)
             throws PersistenceException {
         if (clazz == null || clazz.equals(Object.class)) {
             return;
@@ -145,6 +145,8 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
                 if (field.isAnnotationPresent(Searchable.class)) {
                     Searchable searchable = field.getDeclaredAnnotation(Searchable.class);
                     searchableValues.put(searchable.value(), field.get(item).toString());
+                } else if (isPersistable(field)) {
+                    getSearchableValues(field.get(item), field.getType(), searchableValues);
                 }
             }
             for (Method method : clazz.getMethods()) {
@@ -167,7 +169,7 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
 
         for (ItemContainer itemContainer : activeItems) {
             if (clazz.isAssignableFrom(itemContainer.getItemClass())) {
-                PersistableItem item = deserialize(itemContainer, itemContainer.getItemClass());
+                PersistableItem item = deserialize(itemContainer.getJson(), itemContainer.getItemClass());
                 Map<String, String> searchableValues = new HashMap<>();
                 getSearchableValues(item, item.getClass(), searchableValues);
                 searchParameters.forEach((key, value) -> {
@@ -191,7 +193,7 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         for (ItemContainer itemContainer : activeItems) {
             if (itemContainer.getId().equals(persistenceId)) {
                 if (clazz.isAssignableFrom(itemContainer.getItemClass())) {
-                    return deserialize(itemContainer, clazz);
+                    return (T) deserialize(itemContainer.getJson(), itemContainer.getItemClass());
                 }
             }
         }
@@ -215,7 +217,7 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         for (ItemContainer itemContainer : archivedItems) {
             if (itemContainer.getId().equals(persistenceId) && itemContainer.getVersion() == version) {
                 if (clazz.isAssignableFrom(itemContainer.getItemClass())) {
-                    return deserialize(itemContainer, clazz);
+                    return deserialize(itemContainer.getJson(), clazz);
                 }
             }
         }

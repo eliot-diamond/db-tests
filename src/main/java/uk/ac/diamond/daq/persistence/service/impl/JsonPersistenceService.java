@@ -126,22 +126,21 @@ public abstract class JsonPersistenceService implements PersistenceService {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    <T extends PersistableItem> T deserialize(ItemContainer itemContainer, Class<T> clazz) throws PersistenceException {
+    <T extends PersistableItem> T deserialize(String json, Class<T> clazz) throws PersistenceException {
         try {
             List<ObjectPath> objectPaths = new ArrayList<>();
             ObjectPath objectPath = new ObjectPath();
-            ObjectNode baseNode = (ObjectNode) objectMapper.readTree(itemContainer.getJson());
+            ObjectNode baseNode = (ObjectNode) objectMapper.readTree(json);
             deserializeObject(objectPaths, objectPath, baseNode);
 
-            T item = (T) objectMapper.treeToValue(baseNode, itemContainer.getItemClass());
+            T item = objectMapper.treeToValue(baseNode, clazz);
 
             for (ObjectPath foundObjectPath : objectPaths) {
                 foundObjectPath.applyTo(item);
             }
             return item;
         } catch (IOException | IllegalAccessException e) {
-            throw new PersistenceException("Unable to deserialize item " + itemContainer.getId() + " class " + itemContainer.getItemClass(), e);
+            throw new PersistenceException("Unable to deserialize item " + json + " class " + clazz, e);
         }
     }
 
@@ -250,12 +249,12 @@ public abstract class JsonPersistenceService implements PersistenceService {
             ObjectNode baseNode = objectMapper.valueToTree(item);
             serializeObject(baseNode, item);
 
-            if (log.isInfoEnabled()) {
+            if (log.isTraceEnabled()) {
                 String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(baseNode);
-                log.info("JSON for item {} class {}\n{}", item.getId(), item.getClass(), json);
+                log.trace("JSON for item {} class {}\n{}", item.getId(), item.getClass(), json);
                 return json;
             }
-            return objectMapper.writeValueAsString(item);
+            return objectMapper.writeValueAsString(baseNode);
         } catch (JsonProcessingException | IllegalAccessException e) {
             throw new PersistenceException("Unable to serialize item " + item.getId() + " class " + item.getClass(), e);
         }

@@ -198,10 +198,9 @@ public abstract class PersistenceServiceTest {
         final SearchResult searchResult2 = persistenceService.get(ConcreteItemA.class);
         assertEquals("Expected 2 results", 2, searchResult2.getRows().size());
         final Set<SearchResultHeading> headings2 = searchResult.getHeadings();
+        printSearchResults("All ConcreteA Items", searchResult);
         //(Name, Id) + ConcreteA 1, Concrete A 2, Concrete A3
         assertEquals("Not all headings created", 3, headings2.size());
-        printSearchResults("All ConcreteA Items", searchResult);
-
     }
 
     /**
@@ -420,7 +419,7 @@ public abstract class PersistenceServiceTest {
 
         final AbstractItemContainer retrievedOriginal = persistenceService.get(trigger1.getId(), AbstractItemContainer.class);
         //TODO: See comment on test method
-        assertEquals("Ought to retrieve version of item that went into database with container", 0, retrievedOriginal.getAbstractItem().getVersion());
+        assertEquals("Ought to retrieve version of item that went into database with container", 1, retrievedOriginal.getAbstractItem().getVersion());
 
     }
 
