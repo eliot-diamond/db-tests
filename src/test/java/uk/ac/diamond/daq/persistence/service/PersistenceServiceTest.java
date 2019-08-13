@@ -860,23 +860,4 @@ public abstract class PersistenceServiceTest {
 
     }
 
-    @Test(expected = PersistenceException.class)
-    public void saveContainerContainingListContainingNull() throws PersistenceException {
-        ConcreteListContainer concreteListContainer1 = new ConcreteListContainer("null Holder Holder");
-        ConcreteItemContainer nullHolder = new ConcreteItemContainer("nullHolder", null, 0);
-
-        concreteListContainer1.addTrigger(nullHolder);
-        persistenceService.save(concreteListContainer1);
-
-    }
-
-    @Test(expected = PersistenceException.class)
-    public void saveContainerContainingNullList() throws PersistenceException {
-        ConcreteListContainer concreteListContainer1 = new ConcreteListContainer("null Holder");
-        ConcreteItemContainer nullContainer = null;
-
-        concreteListContainer1.addTrigger(nullContainer);
-        persistenceService.save(concreteListContainer1);
-
-    }
-}
+ }
