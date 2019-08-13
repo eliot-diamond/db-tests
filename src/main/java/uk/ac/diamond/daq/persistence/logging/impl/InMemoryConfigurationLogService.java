@@ -23,22 +23,6 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
         this.persistenceService = persistenceService;
     }
 
-    @Override
-    public List<LogToken> listChanges(BigInteger persistenceId) throws PersistenceException {
-        List<LogToken> result = new ArrayList<>();
-
-        for (LogToken logToken : logTokens) {
-            for (ItemReference itemReference : logToken.getItemReferences()) {
-                if (persistenceId.equals(itemReference.getId())) {
-                    result.add(logToken);
-                    break;
-                }
-            }
-        }
-
-        return result;
-    }
-
     private static void addItemReferences(Object object, Class clazz, Set<ItemReference> itemReferences) throws IllegalAccessException {
         if (PersistableItem.class.isAssignableFrom(clazz)) {
             PersistableItem item = (PersistableItem) object;
@@ -54,6 +38,22 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
         if (parent != null) {
             addItemReferences(object, parent, itemReferences);
         }
+    }
+
+    @Override
+    public List<LogToken> listChanges(BigInteger persistenceId) throws PersistenceException {
+        List<LogToken> result = new ArrayList<>();
+
+        for (LogToken logToken : logTokens) {
+            for (ItemReference itemReference : logToken.getItemReferences()) {
+                if (persistenceId.equals(itemReference.getId())) {
+                    result.add(logToken);
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override

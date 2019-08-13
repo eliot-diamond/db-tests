@@ -31,14 +31,16 @@ public abstract class PersistableItem implements Serializable {
         this.id = id;
     }
 
-    public void setId(String hexString) { this.id = new BigInteger(hexString, HEX_RADIX); }
-
-    public void setVersion(long version) {
-        this.version = version;
+    public void setId(String hexString) {
+        this.id = new BigInteger(hexString, HEX_RADIX);
     }
 
     public long getVersion() {
         return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 
     public void incrementVersion() {

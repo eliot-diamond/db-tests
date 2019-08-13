@@ -5,10 +5,9 @@ import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 public abstract class AbstractItemContainer extends PersistableItem {
+    public static final String CONTAINER_NAME = "name";
     @Persisted
     private AbstractItem abstractItem;
-    public static final String CONTAINER_NAME = "name";
-
     @Persisted(key = true)
     @Searchable(CONTAINER_NAME)
     @Listable("Name")
@@ -23,8 +22,16 @@ public abstract class AbstractItemContainer extends PersistableItem {
         return name;
     }
 
+    public void setName(String newName) {
+        this.name = newName;
+    }
+
     public AbstractItem getAbstractItem() {
         return abstractItem;
+    }
+
+    public void setAbstractItem(AbstractItem theItem) {
+        this.abstractItem = theItem;
     }
 
     public abstract void execute();
@@ -38,13 +45,5 @@ public abstract class AbstractItemContainer extends PersistableItem {
         return (that.name.equals(this.name)
                 && that.getAbstractItem().getName().equals(this.getAbstractItem().getName())
                 && that.getAbstractItem().getVersion() == this.getAbstractItem().getVersion());
-    }
-
-    public void setName(String newName) {
-        this.name = newName;
-    }
-
-    public void setAbstractItem(AbstractItem theItem){
-        this.abstractItem = theItem;
     }
 }

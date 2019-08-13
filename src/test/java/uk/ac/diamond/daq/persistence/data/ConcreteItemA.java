@@ -11,10 +11,8 @@ import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 public class ConcreteItemA extends AbstractItem {
 
-    private static final Logger log = LoggerFactory.getLogger(ConcreteItemA.class);
-
     public static final String CLASS_UNIQUE_FIELD = "uniqueProperty";
-
+    private static final Logger log = LoggerFactory.getLogger(ConcreteItemA.class);
     @Persisted
     private int property1;
     @Persisted

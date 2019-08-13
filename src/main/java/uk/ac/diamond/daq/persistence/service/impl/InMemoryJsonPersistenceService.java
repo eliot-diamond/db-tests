@@ -27,24 +27,6 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         return persistenceId++;
     }
 
-    private ItemContainer getLatest(PersistableItem item) throws PersistenceException {
-        Class<?> clazz = item.getClass();
-
-        for (ItemContainer itemContainer : activeItems) {
-            if (itemContainer.getId().equals(item.getId())) {
-                Class<?> itemClass = itemContainer.getItemClass();
-                if (!clazz.isAssignableFrom(itemClass)) {
-                    throw new PersistenceException(String.format("Archived item with ID %d is not of requested class %s, but is class %s",
-                            item.getId(), clazz.toGenericString(), itemClass.toGenericString()));
-                }
-                return itemContainer;
-            }
-        }
-        return null;
-    }
-
-    private enum SaveAction {doNotSave, updateCurrent, createNewInstance}
-
     private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem, Class<?> clazz,
                                                   SaveAction saveAction) throws PersistenceException {
         try {
@@ -81,6 +63,51 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         }
 
         return calculateChangeType(item, archivedItem, itemClass, saveAction);
+    }
+
+    private static void getSearchableValues(Object item, Class<?> clazz, Map<String, String> searchableValues)
+            throws PersistenceException {
+        if (clazz == null || clazz.equals(Object.class)) {
+            return;
+        }
+
+        try {
+            for (Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(Searchable.class)) {
+                    Searchable searchable = field.getDeclaredAnnotation(Searchable.class);
+                    searchableValues.put(searchable.value(), field.get(item).toString());
+                } else if (isPersistable(field)) {
+                    getSearchableValues(field.get(item), field.getType(), searchableValues);
+                }
+            }
+            for (Method method : clazz.getMethods()) {
+                if (method.isAnnotationPresent(Searchable.class)) {
+                    Searchable searchable = method.getDeclaredAnnotation(Searchable.class);
+                    searchableValues.put(searchable.value(), method.invoke(item).toString());
+                }
+            }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new PersistenceException("Failed to add to search results", e);
+        }
+
+        getSearchableValues(item, clazz.getSuperclass(), searchableValues);
+    }
+
+    private ItemContainer getLatest(PersistableItem item) throws PersistenceException {
+        Class<?> clazz = item.getClass();
+
+        for (ItemContainer itemContainer : activeItems) {
+            if (itemContainer.getId().equals(item.getId())) {
+                Class<?> itemClass = itemContainer.getItemClass();
+                if (!clazz.isAssignableFrom(itemClass)) {
+                    throw new PersistenceException(String.format("Archived item with ID %d is not of requested class %s, but is class %s",
+                            item.getId(), clazz.toGenericString(), itemClass.toGenericString()));
+                }
+                return itemContainer;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -131,35 +158,6 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         }
 
         return result;
-    }
-
-    private static void getSearchableValues(Object item, Class<?> clazz, Map<String, String> searchableValues)
-            throws PersistenceException {
-        if (clazz == null || clazz.equals(Object.class)) {
-            return;
-        }
-
-        try {
-            for (Field field : clazz.getDeclaredFields()) {
-                field.setAccessible(true);
-                if (field.isAnnotationPresent(Searchable.class)) {
-                    Searchable searchable = field.getDeclaredAnnotation(Searchable.class);
-                    searchableValues.put(searchable.value(), field.get(item).toString());
-                } else if (isPersistable(field)) {
-                    getSearchableValues(field.get(item), field.getType(), searchableValues);
-                }
-            }
-            for (Method method : clazz.getMethods()) {
-                if (method.isAnnotationPresent(Searchable.class)) {
-                    Searchable searchable = method.getDeclaredAnnotation(Searchable.class);
-                    searchableValues.put(searchable.value(), method.invoke(item).toString());
-                }
-            }
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new PersistenceException("Failed to add to search results", e);
-        }
-
-        getSearchableValues(item, clazz.getSuperclass(), searchableValues);
     }
 
     @Override
@@ -223,4 +221,6 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
         }
         throw new PersistenceException("No item found with id of " + persistenceId + " and version " + version);
     }
+
+    private enum SaveAction {doNotSave, updateCurrent, createNewInstance}
 }

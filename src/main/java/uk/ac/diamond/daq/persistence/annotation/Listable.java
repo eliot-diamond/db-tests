@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Listable {
-    String value ();
+    String value();
 
-    int priority () default -1;
+    int priority() default -1;
 }

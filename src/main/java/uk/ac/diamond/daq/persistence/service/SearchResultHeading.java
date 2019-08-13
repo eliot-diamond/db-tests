@@ -4,13 +4,13 @@ public class SearchResultHeading {
     private String title;
     private int priority;
 
-    public static int compare (SearchResultHeading lhs, SearchResultHeading rhs) {
-        return Integer.compare(lhs.priority, rhs.priority);
-    }
-
     public SearchResultHeading(String title, int priority) {
         this.title = title;
         this.priority = priority;
+    }
+
+    public static int compare(SearchResultHeading lhs, SearchResultHeading rhs) {
+        return Integer.compare(lhs.priority, rhs.priority);
     }
 
     public int getPriority() {

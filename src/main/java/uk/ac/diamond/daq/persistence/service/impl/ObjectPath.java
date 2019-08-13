@@ -10,16 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 class ObjectPath {
-    private enum PathElementType {
-        field, arrayElement
-    }
-
-    private static class PathElement {
-        PathElementType type;
-        int arrayIndex;
-        String fieldName;
-    }
-
     private List<PathElement> path;
     private PersistableItem fieldItem;
 
@@ -27,7 +17,6 @@ class ObjectPath {
         path = new ArrayList<>();
         fieldItem = null;
     }
-
     private ObjectPath(ObjectPath source) {
         this();
         for (PathElement sourcePathElement : source.path) {
@@ -105,5 +94,15 @@ class ObjectPath {
                 throw new PersistenceException("Failed to find field type");
             }
         }
+    }
+
+    private enum PathElementType {
+        field, arrayElement
+    }
+
+    private static class PathElement {
+        PathElementType type;
+        int arrayIndex;
+        String fieldName;
     }
 }

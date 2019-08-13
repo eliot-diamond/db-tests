@@ -27,19 +27,6 @@ public abstract class PersistenceServiceTest {
     private ConcreteItemA concreteItemA2;
     private ConcreteItemB concreteItemB2;
 
-    protected void createTestData() throws PersistenceException {
-        // Add a scan of each type
-        concreteItemA = new ConcreteItemA(COMMON_NAME, 55, 12, CONCRETE_ITEM_A_CLASS_UNIQUE);
-        persistenceService.save(concreteItemA);
-        concreteItemB = new ConcreteItemB(CONCRETE_ITEM_B_NAME_1, 100, 360.0);
-        persistenceService.save(concreteItemB);
-        // Same name to get multiple results for a search
-        concreteItemA2 = new ConcreteItemA(COMMON_NAME, 12, 23, "Tea");
-        persistenceService.save(concreteItemA2);
-        concreteItemB2 = new ConcreteItemB(COMMON_NAME, 63, 55);
-        persistenceService.save(concreteItemB2);
-    }
-
     private static void printSearchResults(String title, SearchResult searchResult) {
         Set<SearchResultHeading> headings = searchResult.getHeadings();
         StringBuilder message = new StringBuilder();
@@ -59,6 +46,19 @@ public abstract class PersistenceServiceTest {
             }
         }
         log.info(message.toString());
+    }
+
+    protected void createTestData() throws PersistenceException {
+        // Add a scan of each type
+        concreteItemA = new ConcreteItemA(COMMON_NAME, 55, 12, CONCRETE_ITEM_A_CLASS_UNIQUE);
+        persistenceService.save(concreteItemA);
+        concreteItemB = new ConcreteItemB(CONCRETE_ITEM_B_NAME_1, 100, 360.0);
+        persistenceService.save(concreteItemB);
+        // Same name to get multiple results for a search
+        concreteItemA2 = new ConcreteItemA(COMMON_NAME, 12, 23, "Tea");
+        persistenceService.save(concreteItemA2);
+        concreteItemB2 = new ConcreteItemB(COMMON_NAME, 63, 55);
+        persistenceService.save(concreteItemB2);
     }
 
     @Test
@@ -107,7 +107,6 @@ public abstract class PersistenceServiceTest {
         assertTrue("Not deserialised as B_A", retrievedAbstractSuperClass instanceof ConcreteItemBsubA);
 
 
-
     }
 
     @Test(expected = PersistenceException.class)
@@ -129,7 +128,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void testSearchIdForContents() throws PersistenceException{
+    public void testSearchIdForContents() throws PersistenceException {
         ConcreteItemContainer thisContainer = new ConcreteItemContainer("Name", concreteItemB, 12);
         persistenceService.save(thisContainer);
 
@@ -137,7 +136,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void testSearchIdForContainer() throws PersistenceException{
+    public void testSearchIdForContainer() throws PersistenceException {
         ConcreteItemContainer thisContainer = new ConcreteItemContainer("Name", concreteItemB, 12);
         persistenceService.save(thisContainer);
 
@@ -204,7 +203,6 @@ public abstract class PersistenceServiceTest {
      * You make changes to the scan and persist it once more.
      * Should still be searchable for on the Tomography specific fields, as deserialiser ensures everything is stored
      * as itself, not as superclass.
-     *
      */
     @Test
     public void testSubclassSpecificFields() throws PersistenceException {
@@ -430,7 +428,7 @@ public abstract class PersistenceServiceTest {
      * However, changing an object (id, name, etc.) does change the version of the container.
      */
     @Test
-    public void testVersionIncrementedOnEditContentsOfList() throws PersistenceException{
+    public void testVersionIncrementedOnEditContentsOfList() throws PersistenceException {
         final ConcreteItemContainer trigger1 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 78);
         final ConcreteItemContainer trigger2 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemA, 78);
 
@@ -457,7 +455,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void testVersionIncrementedOnEditContentsOfNestedList() throws PersistenceException{
+    public void testVersionIncrementedOnEditContentsOfNestedList() throws PersistenceException {
         final ConcreteItemContainer trigger1 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 78);
         final ConcreteItemContainer trigger2 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemA, 178);
         final ConcreteListContainer plan1 = new ConcreteListContainer("Name");
@@ -495,7 +493,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void testVersionIncrementedOnEditContentsOfMap() throws PersistenceException{
+    public void testVersionIncrementedOnEditContentsOfMap() throws PersistenceException {
         assertEquals(0, concreteItemB.getVersion());
 
         ConcreteMapContainer concreteMapContainer1 = new ConcreteMapContainer("Map Container");
@@ -588,7 +586,8 @@ public abstract class PersistenceServiceTest {
 
     }
 
-    /**git
+    /**
+     * git
      * get(A) where A contains B, C and B and C both contain D should get a single reference for D.
      * D should be the latest version of D.
      */
@@ -610,7 +609,7 @@ public abstract class PersistenceServiceTest {
         ConcreteListContainer retrievedListContainer = persistenceService.get(concreteListContainer1.getId(), ConcreteListContainer.class);
 
         assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newContainerName", retrievedListContainer.getAbstractItemContainers().get(1).getName());
-        assertEquals("Saving a container should save all it contains and retrieving one should get the latest version","newItem",retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getName());
+        assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newItem", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getName());
         assertSame("Should be same items as both Triggers use ConcreteB should retrieve latest for both", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
     }
 
@@ -681,7 +680,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void saveMapWithRepeatedItem() throws PersistenceException{
+    public void saveMapWithRepeatedItem() throws PersistenceException {
         ConcreteMapContainer theMap = new ConcreteMapContainer("a map");
         theMap.addItem("itemA", concreteItemA);
         theMap.addItem("theSameItem", concreteItemA);
@@ -691,8 +690,7 @@ public abstract class PersistenceServiceTest {
 
         ConcreteMapContainer retrievedMap = persistenceService.get(theMap.getId(), ConcreteMapContainer.class);
         assertEquals("Did not retrieve item that went in with map", concreteItemA, theMap.getItem("itemA"));
-        assertSame(theMap.getItem("itemA"), theMap.getItem("theSameItem"));
-
+        assertSame("Should ensure only one memory reference per item to prevent confusion over update history", theMap.getItem("itemA"), theMap.getItem("theSameItem"));
 
     }
 
@@ -704,13 +702,13 @@ public abstract class PersistenceServiceTest {
      */
 
     @Test(expected = PersistenceException.class)
-    public void saveNulls() throws PersistenceException{
+    public void saveNulls() throws PersistenceException {
 
         persistenceService.save(null);
     }
 
     @Test
-    public void saveContainedNull() throws PersistenceException{
+    public void saveContainedNull() throws PersistenceException {
         ConcreteItemContainer nullHolder = new ConcreteItemContainer("nullName", null, 0);
         persistenceService.save(nullHolder);
 
@@ -719,7 +717,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void saveMapContainingNull() throws PersistenceException{
+    public void saveMapContainingNull() throws PersistenceException {
         ConcreteMapContainer concreteMapContainer1 = new ConcreteMapContainer("nullItem");
         concreteMapContainer1.addItem("itemA", null);
         persistenceService.save(concreteMapContainer1);
@@ -729,7 +727,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void saveContainerContainingListContainingNull() throws PersistenceException{
+    public void saveContainerContainingListContainingNull() throws PersistenceException {
         ConcreteListContainer concreteListContainer1 = new ConcreteListContainer("null Holder Holder");
         ConcreteItemContainer nullHolder = new ConcreteItemContainer("nullHolder", null, 0);
 
@@ -742,7 +740,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void saveContainerContainingNullList() throws PersistenceException{
+    public void saveContainerContainingNullList() throws PersistenceException {
         ConcreteListContainer concreteListContainer1 = new ConcreteListContainer("null Holder");
         ConcreteItemContainer nullContainer = null;
 
@@ -754,7 +752,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteDoesntRetrieve() throws PersistenceException{
+    public void deleteDoesntRetrieve() throws PersistenceException {
         final BigInteger id = concreteItemA.getId();
         persistenceService.delete(concreteItemA);
         persistenceService.get(id, ConcreteItemA.class);
@@ -762,21 +760,21 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteUsingID() throws PersistenceException{
+    public void deleteUsingID() throws PersistenceException {
         final BigInteger id = concreteItemA.getId();
         persistenceService.delete(id);
         persistenceService.get(id, ConcreteItemA.class);
 
     }
 
-    @Test(expected = PersistenceException.class)
-    public void deleteUsingInvalidID() throws PersistenceException{
-        persistenceService.delete(INVALID_ID);
+    @Test
+    public void deleteUsingInvalidID() throws PersistenceException {
+        assertFalse("ID with no object deleted something", persistenceService.delete(INVALID_ID));
 
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteExceptsContainerRetrieval() throws PersistenceException{
+    public void deleteExceptsContainerRetrieval() throws PersistenceException {
         ConcreteItemContainer container = new ConcreteItemContainer("name", concreteItemA, 1);
         persistenceService.save(container);
         persistenceService.delete(concreteItemA);
@@ -785,7 +783,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteExceptsContainerRetrievalThroughLayers() throws PersistenceException{
+    public void deleteExceptsContainerRetrievalThroughLayers() throws PersistenceException {
         ConcreteItemContainer container = new ConcreteItemContainer("name", concreteItemA, 1);
         ConcreteListContainer containerContainer = new ConcreteListContainer("all-enveloping");
         persistenceService.save(containerContainer);
@@ -795,7 +793,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteExceptsMapRetrieval() throws PersistenceException{
+    public void deleteExceptsMapRetrieval() throws PersistenceException {
         ConcreteMapContainer container = new ConcreteMapContainer("name");
         container.addItem("itemA", concreteItemA);
         persistenceService.save(container);
@@ -805,7 +803,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void getOldVersion() throws PersistenceException{
+    public void getOldVersion() throws PersistenceException {
         concreteItemB.setProperty1(12);
         persistenceService.save(concreteItemB);
 
@@ -815,41 +813,199 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void getInvalidIdFromArchive() throws PersistenceException{
+    public void getInvalidIdFromArchive() throws PersistenceException {
 
         persistenceService.getArchive(INVALID_ID, 0, AbstractItem.class);
 
     }
 
     @Test(expected = PersistenceException.class)
-    public void getInvalidVersionFromArchive() throws PersistenceException{
+    public void getInvalidVersionFromArchive() throws PersistenceException {
 
         persistenceService.getArchive(concreteItemB.getId(), 1, AbstractItem.class);
 
     }
 
     @Test(expected = PersistenceException.class)
-    public void getInvalidClassFromArchive() throws PersistenceException{
+    public void getInvalidClassFromArchive() throws PersistenceException {
 
         persistenceService.getArchive(concreteItemB.getId(), 0, ConcreteItemA.class);
 
     }
 
     @Test
-    public void deleteDoesntEffectArchive() throws PersistenceException{
+    public void deleteDoesntEffectArchive() throws PersistenceException {
         concreteItemB.setProperty1(12);
         persistenceService.save(concreteItemB);
 
-        persistenceService.delete(concreteItemB.getId());
+        assertTrue("Object not successfully deleted", persistenceService.delete(concreteItemB.getId()));
 
         List<Long> archivedVersions = persistenceService.getVersions(concreteItemB.getId());
-        assertEquals("Should find all versions, even deleted ones, in archive",2, archivedVersions.size());
+        assertEquals("Should find all versions, even deleted ones, in archive", 2, archivedVersions.size());
 
         ConcreteItemB oldVersion = persistenceService.getArchive(concreteItemB.getId(), 0, ConcreteItemB.class);
 
         assertNotEquals("Got new version from archive", 12, oldVersion.getProperty1());
 
-        assertNotNull("Couldn't find latest version after deletion",persistenceService.getArchive(concreteItemB.getId(), 1, ConcreteItemB.class));
+        assertNotNull("Couldn't find latest version after deletion", persistenceService.getArchive(concreteItemB.getId(), 1, ConcreteItemB.class));
     }
 
- }
+    @Test
+    public void persistingIdenticalObjects() throws PersistenceException {
+
+        ConcreteItemB concreteItemC = new ConcreteItemB(CONCRETE_ITEM_B_NAME_1, 100, 360.0); //functionality identical to concreteItemB
+        ConcreteItemB concreteItemC_2 = new ConcreteItemB(CONCRETE_ITEM_B_NAME_1, 100, 360.0); //functionality identical to concreteItemB
+
+        //As equality requires IDs to be the same, can only have 2 seperate items be equals prior to persisting
+        assertEquals(concreteItemC_2, concreteItemC);
+
+
+        ConcreteItemContainer containerA = new ConcreteItemContainer("hold_1", concreteItemC, 1);
+        ConcreteItemContainer containerB = new ConcreteItemContainer("hold_2", concreteItemC_2, 1);
+
+        ConcreteListContainer superContainer = new ConcreteListContainer("");
+
+        persistenceService.save(superContainer);
+
+        ConcreteListContainer retrievedContainer = persistenceService.get(superContainer.getId(), ConcreteListContainer.class);
+
+        assertNotSame("Deserialised 2 identical but distinct items as the same item", retrievedContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedContainer.getAbstractItemContainers().get(0).getAbstractItem());
+        assertNotEquals("Two items written to same ID", concreteItemC_2, concreteItemC);
+
+    }
+
+    @Test
+    public void persistingIdenticalObjectsInMap() throws PersistenceException {
+
+        ConcreteItemB concreteItemC = new ConcreteItemB(CONCRETE_ITEM_B_NAME_1, 100, 360.0); //functionality identical to concreteItemB
+        ConcreteItemB concreteItemC_2 = new ConcreteItemB(CONCRETE_ITEM_B_NAME_1, 100, 360.0); //functionality identical to concreteItemB
+
+        //As equality requires IDs to be the same, can only have 2 seperate items be equals prior to persisting
+        assertEquals(concreteItemC_2, concreteItemC);
+
+        ConcreteMapContainer containerA = new ConcreteMapContainer("hold_1");
+        containerA.addItem("Item1", concreteItemC);
+        containerA.addItem("Item2", concreteItemC_2);
+
+
+        persistenceService.save(containerA);
+
+        ConcreteMapContainer retrievedContainer = persistenceService.get(containerA.getId(), ConcreteMapContainer.class);
+
+        assertNotSame("Deserialised 2 identical but distinct items as the same item", retrievedContainer.getItem("Item1"), retrievedContainer.getItem("Item2"));
+        assertNotEquals("Two items written to same ID", concreteItemC_2, concreteItemC);
+        assertNotEquals("Two items written to same ID", retrievedContainer.getItem("Item1"), retrievedContainer.getItem("Item2"));
+
+
+    }
+
+    /**
+     * For next 3 tests, ambiguity in which item would be saved with a higher version number
+     * These cases are extremely fringe,as rely on id number and versioning both put in by the persistence
+     * and other tests ensure that out of sync objects do not come out of the database.
+     */
+    //B2 is ~an unsaved change to B, B2 should be saved as a new version of B and be the one retrieved.
+    @Test
+    public void savingTwoOutOfSyncUnsavedItems() throws PersistenceException {
+
+        concreteItemB2.setId(concreteItemB.getId());
+        concreteItemB2.setVersion(concreteItemB.getVersion());
+
+
+        ConcreteMapContainer containerA = new ConcreteMapContainer("hold_1");
+        containerA.addItem("Item1", concreteItemB);
+        containerA.addItem("Item2", concreteItemB2);
+
+        persistenceService.save(containerA);
+
+        ConcreteMapContainer retrived = persistenceService.get(containerA.getId(),ConcreteMapContainer.class);
+
+        assertSame("Two references to same item", retrived.getItem("Item1"), retrived.getItem("Item2"));
+        assertEquals("Did not persist latest unsaved changes", retrived.getItem("Item1"), concreteItemB2);
+
+    }
+
+    //B2 has a higher version but neither match the database, which should be saved later and therefore retrieved?
+    //TODO: Probably neither, throw an except
+    @Test(expected = PersistenceException.class)
+    public void savingTwoOutOfSyncVersions() throws PersistenceException {
+
+        concreteItemB2.setId(concreteItemB.getId());
+        concreteItemB2.setVersion(concreteItemB.getVersion() + 1);
+
+        concreteItemB.setProperty1(888);
+
+        ConcreteMapContainer containerA = new ConcreteMapContainer("hold_1");
+        containerA.addItem("Item1", concreteItemB);
+        containerA.addItem("Item2", concreteItemB2);
+
+        persistenceService.save(containerA);
+    }
+
+    @Test
+    public void savingTwoOutOfSyncSavedItems() throws PersistenceException {
+
+        concreteItemB2 = persistenceService.get(concreteItemB.getId(), ConcreteItemB.class);
+        concreteItemB.setProperty1(7);
+        persistenceService.save(concreteItemB); //B is now the higher version
+
+        ConcreteMapContainer containerA = new ConcreteMapContainer("hold_1");
+        containerA.addItem("Item1", concreteItemB);
+        containerA.addItem("Item2", concreteItemB2);
+
+        persistenceService.save(containerA);
+
+        ConcreteMapContainer retrievedMap = persistenceService.get(containerA.getId(), ConcreteMapContainer.class);
+
+        assertEquals("Should have saved all children and got most recent version", concreteItemB.getVersion(), retrievedMap.getItem("Item1"));
+        assertEquals("Should have saved all children and got most recent version", concreteItemB.getVersion(), retrievedMap.getItem("Item2"));
+
+    }
+
+    @Test
+    public void arbitraryVersionChanges() throws PersistenceException {
+
+        concreteItemB2 = persistenceService.get(concreteItemB.getId(), ConcreteItemB.class);
+        concreteItemB2.setProperty1(10000);
+        concreteItemB.setVersion(500);
+        persistenceService.save(concreteItemB);
+        persistenceService.save(concreteItemB2);
+
+        assertTrue("Auto-set version number did not deal with arbitrary version changes/desync", concreteItemB.getVersion() == 500 );
+
+        assertTrue("Auto-set version number did not deal with arbitrary version changes/desync", concreteItemB2.getVersion() > 500 );
+    }
+
+    //TODO: Or should it persist without issue but when generating an Id  ignore any invalid numbers?
+    //TODO: Should having an invalid Id be reason enough for a new version to be saved? If so, uncomment test below
+    @Test(expected = PersistenceException.class)
+    public void invalidVersionChanges() throws PersistenceException {
+
+        concreteItemB2 = persistenceService.get(concreteItemB.getId(), ConcreteItemB.class);
+        concreteItemB2.setProperty1(10000);
+        concreteItemB.setVersion(-5);
+        persistenceService.save(concreteItemB);
+//        persistenceService.save(concreteItemB2);
+//
+//        assertEquals("Either version number did not ignore invalid result or got latest not highest version", concreteItemB2, persistenceService.get(concreteItemB.getId(), ConcreteItemB.class));
+
+    }
+
+    //TODO: Or should all with invalid Ids be ignored except in archive?
+    @Test
+    public void invalidVersionOnlyInDatabase() throws PersistenceException {
+
+        concreteItemB2 = new ConcreteItemB("item", 1, 3);
+        concreteItemB2.setId(new BigInteger("1000")); //So no other item with ID
+        concreteItemB2.setVersion(-5);
+
+        persistenceService.save(concreteItemB2);
+        ConcreteItemB retrievedItem = persistenceService.get(concreteItemB2.getId(), ConcreteItemB.class);
+
+        assertTrue("Item with invalid version not set valid version on persist", retrievedItem.getVersion() > 0);
+        retrievedItem.setVersion(-5); //As equality of PersistedItem needs version, id to be the same.
+        assertEquals("Did not find item with invalid version when it is only instance of Id in database", concreteItemB2, retrievedItem);
+
+    }
+
+}

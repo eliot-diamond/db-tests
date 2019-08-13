@@ -53,6 +53,19 @@ public abstract class JsonPersistenceService implements PersistenceService {
         return false;
     }
 
+    static Field findFieldInClass(Class<?> clazz, String fieldName) {
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.getName().equals(fieldName)) {
+                return field;
+            }
+        }
+        Class<?> parent = clazz.getSuperclass();
+        if (parent != null && parent != Object.class) {
+            return findFieldInClass(parent, fieldName);
+        }
+        return null;
+    }
+
     private PersistableItem getPersistableItemFromJsonNode(JsonNode node) throws PersistenceException {
         if (node instanceof ObjectNode) {
             ObjectNode childObjectNode = (ObjectNode) node;
@@ -142,19 +155,6 @@ public abstract class JsonPersistenceService implements PersistenceService {
         } catch (IOException | IllegalAccessException e) {
             throw new PersistenceException("Unable to deserialize item " + json + " class " + clazz, e);
         }
-    }
-
-    static Field findFieldInClass(Class<?> clazz, String fieldName) {
-        for (Field field : clazz.getDeclaredFields()) {
-            if (field.getName().equals(fieldName)) {
-                return field;
-            }
-        }
-        Class<?> parent = clazz.getSuperclass();
-        if (parent != null && parent != Object.class) {
-            return findFieldInClass(parent, fieldName);
-        }
-        return null;
     }
 
     private void serializeMap(ObjectNode objectNode, Map<Object, Object> map) throws PersistenceException, IllegalAccessException {
