@@ -27,4 +27,5 @@ public class ConcreteItemContainer extends AbstractItemContainer {
     public double getProperty4() {
         return property4;
     }
+    
 }

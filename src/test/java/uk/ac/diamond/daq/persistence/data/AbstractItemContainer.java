@@ -43,4 +43,8 @@ public abstract class AbstractItemContainer extends PersistableItem {
     public void setName(String newName) {
         this.name = newName;
     }
+
+    public void setAbstractItem(AbstractItem theItem){
+        this.abstractItem = theItem;
+    }
 }

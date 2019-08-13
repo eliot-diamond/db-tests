@@ -852,12 +852,4 @@ public abstract class PersistenceServiceTest {
         assertNotNull("Couldn't find latest version after deletion",persistenceService.getArchive(concreteItemB.getId(), 1, ConcreteItemB.class));
     }
 
-    @Test(expected = PersistenceException.class)
-    public void saveMapContainingNull() throws PersistenceException {
-        ConcreteMapContainer concreteMapContainer1 = new ConcreteMapContainer("nullItem");
-        concreteMapContainer1.addItem("itemA", null);
-        persistenceService.save(concreteMapContainer1);
-
-    }
-
  }
