@@ -992,20 +992,20 @@ public abstract class PersistenceServiceTest {
     }
 
     //TODO: Or should all with invalid Ids be ignored except in archive?
-    @Test
-    public void invalidVersionOnlyInDatabase() throws PersistenceException {
-
-        concreteItemB2 = new ConcreteItemB("item", 1, 3);
-        concreteItemB2.setId(new BigInteger("1000")); //So no other item with ID
-        concreteItemB2.setVersion(-5);
-
-        persistenceService.save(concreteItemB2);
-        ConcreteItemB retrievedItem = persistenceService.get(concreteItemB2.getId(), ConcreteItemB.class);
-
-        assertTrue("Item with invalid version not set valid version on persist", retrievedItem.getVersion() > 0);
-        retrievedItem.setVersion(-5); //As equality of PersistedItem needs version, id to be the same.
-        assertEquals("Did not find item with invalid version when it is only instance of Id in database", concreteItemB2, retrievedItem);
-
-    }
+//    @Test
+//    public void invalidVersionOnlyInDatabase() throws PersistenceException {
+//
+//        concreteItemB2 = new ConcreteItemB("item", 1, 3);
+//        concreteItemB2.setId(new BigInteger("1000")); //So no other item with ID
+//        concreteItemB2.setVersion(-5);
+//
+//        persistenceService.save(concreteItemB2);
+//        ConcreteItemB retrievedItem = persistenceService.get(concreteItemB2.getId(), ConcreteItemB.class);
+//
+//        assertTrue("Item with invalid version not set valid version on persist", retrievedItem.getVersion() > 0);
+//        retrievedItem.setVersion(-5); //As equality of PersistedItem needs version, id to be the same.
+//        assertEquals("Did not find item with invalid version when it is only instance of Id in database", concreteItemB2, retrievedItem);
+//
+//    }
 
 }
