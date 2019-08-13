@@ -1,4 +1,4 @@
-package uk.ac.diamond.daq.persistence.service.impl;
+package uk.ac.diamond.daq.persistence.json.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,17 +9,14 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Persisted;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
+import uk.ac.diamond.daq.persistence.json.JsonSerializer;
 import uk.ac.diamond.daq.persistence.json.PersistenceIdDeserializer;
 import uk.ac.diamond.daq.persistence.json.PersistenceIdSerializer;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -28,12 +25,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public abstract class JsonPersistenceService implements PersistenceService {
-    private static final Logger log = LoggerFactory.getLogger(JsonPersistenceService.class);
+public class DefaultJsonSerializer implements JsonSerializer {
+    private static final Logger log = LoggerFactory.getLogger(JsonSerializer.class);
 
     private ObjectMapper objectMapper;
 
-    JsonPersistenceService() {
+    private class NullPersistableItem extends PersistableItem {
+    }
+
+    public DefaultJsonSerializer() {
         objectMapper = new ObjectMapper();
 
         SimpleModule simpleModule = new SimpleModule();
@@ -42,15 +42,100 @@ public abstract class JsonPersistenceService implements PersistenceService {
         objectMapper.registerModule(simpleModule);
     }
 
-    public static boolean isPersistable(Field field) {
-        Annotation[] annotations = field.getAnnotations();
-        for (Annotation annotation : annotations) {
-            Class<? extends Annotation> clazz = annotation.getClass();
-            if (Persisted.class.equals(clazz) || Listable.class.equals(clazz) || Searchable.class.equals(clazz)) {
-                return true;
+    private PersistableItem getPersistableItemFromJsonNode(JsonNode node, PersistenceService persistenceService)
+            throws PersistenceException {
+        if (node instanceof ObjectNode) {
+            ObjectNode childObjectNode = (ObjectNode) node;
+            JsonNode classNode = childObjectNode.get("class");
+            JsonNode idNode = childObjectNode.get("id");
+            if (classNode != null && idNode != null) {
+                try {
+                    Class<?> clazz = Class.forName(classNode.asText());
+                    if (PersistableItem.class.isAssignableFrom(clazz)) {
+                        long id = idNode.longValue();
+                        return persistenceService.get(id, (Class<? extends PersistableItem>) clazz);
+                    }
+                } catch (ClassNotFoundException e) {
+                    //Ignore because we are going to return as an error...
+                }
             }
         }
-        return false;
+        return null;
+    }
+
+    private void deserializeArray(List<ObjectPath> objectPaths, ObjectPath objectPath, ArrayNode arrayNode,
+                                  PersistenceService persistenceService) throws PersistenceException {
+        Iterator<JsonNode> iterator = arrayNode.iterator();
+
+        List<Integer> toRemove = new ArrayList<>();
+
+        for (int i = 0; iterator.hasNext(); i++) {
+            JsonNode arrayItemNode = iterator.next();
+            if (arrayItemNode instanceof ObjectNode) {
+                ObjectPath childObjectPath = new ObjectPath(objectPath, i);
+                PersistableItem fieldItem = getPersistableItemFromJsonNode(arrayItemNode, persistenceService);
+                if (fieldItem != null) {
+                    childObjectPath.setItem(fieldItem);
+                    objectPaths.add(childObjectPath);
+                    toRemove.add(i);
+                } else {
+                    deserializeObject(objectPaths, childObjectPath, (ObjectNode) arrayItemNode, persistenceService);
+                }
+            } else if (arrayItemNode instanceof ArrayNode) {
+                ObjectPath childObjectPath = new ObjectPath(objectPath, i);
+                deserializeArray(objectPaths, childObjectPath, (ArrayNode) arrayItemNode, persistenceService);
+            }
+        }
+
+        toRemove.forEach((i) -> {
+            arrayNode.remove(i);
+            arrayNode.insertNull(i);
+        });
+    }
+
+    private void deserializeObject(List<ObjectPath> objectPaths, ObjectPath objectPath, ObjectNode objectNode,
+                                   PersistenceService persistenceService) throws PersistenceException {
+        Iterator<Entry<String, JsonNode>> iterator = objectNode.fields();
+        while (iterator.hasNext()) {
+            Entry<String, JsonNode> entry = iterator.next();
+            JsonNode childNode = entry.getValue();
+
+            if (childNode instanceof ObjectNode) {
+                ObjectPath childObjectPath = new ObjectPath(objectPath, entry.getKey());
+                PersistableItem fieldItem = getPersistableItemFromJsonNode(entry.getValue(), persistenceService);
+                if (fieldItem != null) {
+                    childObjectPath.setItem(fieldItem);
+                    objectPaths.add(childObjectPath);
+                    JsonNode fieldNode = JsonNodeFactory.instance.nullNode();
+                    objectNode.put(entry.getKey(), fieldNode);
+                } else {
+                    deserializeObject(objectPaths, childObjectPath, (ObjectNode) entry.getValue(), persistenceService);
+                }
+            } else if (childNode instanceof ArrayNode) {
+                ObjectPath childObjectPath = new ObjectPath(objectPath, entry.getKey());
+                deserializeArray(objectPaths, childObjectPath, (ArrayNode) childNode, persistenceService);
+            }
+        }
+    }
+
+    @Override
+    public <T extends PersistableItem> T deserialize(String json, Class<T> clazz, PersistenceService persistenceService)
+            throws PersistenceException {
+        try {
+            List<ObjectPath> objectPaths = new ArrayList<>();
+            ObjectPath objectPath = new ObjectPath();
+            ObjectNode baseNode = (ObjectNode) objectMapper.readTree(json);
+            deserializeObject(objectPaths, objectPath, baseNode, persistenceService);
+
+            T item = objectMapper.treeToValue(baseNode, clazz);
+
+            for (ObjectPath foundObjectPath : objectPaths) {
+                foundObjectPath.applyTo(item);
+            }
+            return item;
+        } catch (IOException | IllegalAccessException e) {
+            throw new PersistenceException("Unable to deserialize item " + json + " class " + clazz, e);
+        }
     }
 
     static Field findFieldInClass(Class<?> clazz, String fieldName) {
@@ -66,98 +151,8 @@ public abstract class JsonPersistenceService implements PersistenceService {
         return null;
     }
 
-    private PersistableItem getPersistableItemFromJsonNode(JsonNode node) throws PersistenceException {
-        if (node instanceof ObjectNode) {
-            ObjectNode childObjectNode = (ObjectNode) node;
-            JsonNode classNode = childObjectNode.get("class");
-            JsonNode idNode = childObjectNode.get("id");
-            if (classNode != null && idNode != null) {
-                try {
-                    Class<?> clazz = Class.forName(classNode.asText());
-                    if (PersistableItem.class.isAssignableFrom(clazz)) {
-                        BigInteger id = idNode.bigIntegerValue();
-                        return get(id, (Class<? extends PersistableItem>) clazz);
-                    }
-                } catch (ClassNotFoundException e) {
-                    //Ignore because we are going to return as an error...
-                }
-            }
-        }
-        return null;
-    }
-
-    private void deserializeArray(List<ObjectPath> objectPaths, ObjectPath objectPath, ArrayNode arrayNode) throws PersistenceException {
-        Iterator<JsonNode> iterator = arrayNode.iterator();
-
-        List<Integer> toRemove = new ArrayList<>();
-
-        for (int i = 0; iterator.hasNext(); i++) {
-            JsonNode arrayItemNode = iterator.next();
-            if (arrayItemNode instanceof ObjectNode) {
-                ObjectPath childObjectPath = new ObjectPath(objectPath, i);
-                PersistableItem fieldItem = getPersistableItemFromJsonNode(arrayItemNode);
-                if (fieldItem != null) {
-                    childObjectPath.setItem(fieldItem);
-                    objectPaths.add(childObjectPath);
-                    toRemove.add(i);
-                } else {
-                    deserializeObject(objectPaths, childObjectPath, (ObjectNode) arrayItemNode);
-                }
-            } else if (arrayItemNode instanceof ArrayNode) {
-                ObjectPath childObjectPath = new ObjectPath(objectPath, i);
-                deserializeArray(objectPaths, childObjectPath, (ArrayNode) arrayItemNode);
-            }
-        }
-
-        toRemove.forEach((i) -> {
-            arrayNode.remove(i);
-            arrayNode.insertNull(i);
-        });
-    }
-
-    private void deserializeObject(List<ObjectPath> objectPaths, ObjectPath objectPath, ObjectNode objectNode) throws PersistenceException {
-        Iterator<Map.Entry<String, JsonNode>> iterator = objectNode.fields();
-        while (iterator.hasNext()) {
-            Map.Entry<String, JsonNode> entry = iterator.next();
-            JsonNode childNode = entry.getValue();
-
-            if (childNode instanceof ObjectNode) {
-                ObjectPath childObjectPath = new ObjectPath(objectPath, entry.getKey());
-                PersistableItem fieldItem = getPersistableItemFromJsonNode(entry.getValue());
-                if (fieldItem != null) {
-                    childObjectPath.setItem(fieldItem);
-                    objectPaths.add(childObjectPath);
-                    JsonNode fieldNode = JsonNodeFactory.instance.nullNode();
-                    objectNode.put(entry.getKey(), fieldNode);
-                } else {
-                    deserializeObject(objectPaths, childObjectPath, (ObjectNode) entry.getValue());
-                }
-            } else if (childNode instanceof ArrayNode) {
-                ObjectPath childObjectPath = new ObjectPath(objectPath, entry.getKey());
-                deserializeArray(objectPaths, childObjectPath, (ArrayNode) childNode);
-            }
-        }
-    }
-
-    <T extends PersistableItem> T deserialize(String json, Class<T> clazz) throws PersistenceException {
-        try {
-            List<ObjectPath> objectPaths = new ArrayList<>();
-            ObjectPath objectPath = new ObjectPath();
-            ObjectNode baseNode = (ObjectNode) objectMapper.readTree(json);
-            deserializeObject(objectPaths, objectPath, baseNode);
-
-            T item = objectMapper.treeToValue(baseNode, clazz);
-
-            for (ObjectPath foundObjectPath : objectPaths) {
-                foundObjectPath.applyTo(item);
-            }
-            return item;
-        } catch (IOException | IllegalAccessException e) {
-            throw new PersistenceException("Unable to deserialize item " + json + " class " + clazz, e);
-        }
-    }
-
-    private void serializeMap(ObjectNode objectNode, Map<Object, Object> map) throws PersistenceException, IllegalAccessException {
+    private void serializeMap(ObjectNode objectNode, Map<Object, Object> map, PersistenceService persistenceService)
+            throws PersistenceException, IllegalAccessException {
         for (Entry<Object, Object> entry : map.entrySet()) {
             JsonNode node = objectNode.get(entry.getKey().toString());
             if (node == null) {
@@ -166,24 +161,25 @@ public abstract class JsonPersistenceService implements PersistenceService {
             if (node instanceof ObjectNode) {
                 if (entry.getValue() instanceof PersistableItem) {
                     PersistableItem fieldItem = (PersistableItem) entry.getValue();
-                    save(fieldItem);
+                    persistenceService.save(fieldItem);
                     ObjectNode newNode = JsonNodeFactory.instance.objectNode();
                     newNode.put("id", fieldItem.getId());
                     newNode.put("version", fieldItem.getVersion());
                     newNode.put("class", fieldItem.getClass().getCanonicalName());
                     objectNode.put(entry.getKey().toString(), newNode);
                 } else if (entry.getValue() instanceof Map) {
-                    serializeMap((ObjectNode) node, (Map) entry.getValue());
+                    serializeMap((ObjectNode) node, (Map) entry.getValue(), persistenceService);
                 } else {
-                    serializeObject((ObjectNode) node, entry.getValue());
+                    serializeObject((ObjectNode) node, entry.getValue(), persistenceService);
                 }
             } else if (node instanceof ArrayNode) {
-                serializeArray((ArrayNode) node, (List<Object>) entry.getValue());
+                serializeArray((ArrayNode) node, (List<Object>) entry.getValue(), persistenceService);
             }
         }
     }
 
-    private void serializeArray(ArrayNode arrayNode, List<Object> array) throws PersistenceException, IllegalAccessException {
+    private void serializeArray(ArrayNode arrayNode, List<Object> array, PersistenceService persistenceService)
+            throws PersistenceException, IllegalAccessException {
         Iterator<JsonNode> iterator = arrayNode.iterator();
 
         List<JsonNode> nodes = new ArrayList<>();
@@ -191,19 +187,21 @@ public abstract class JsonPersistenceService implements PersistenceService {
         for (int i = 0; iterator.hasNext(); i++) {
             JsonNode arrayItemNode = iterator.next();
             Object item = array.get(i);
-            if (PersistableItem.class.isAssignableFrom(item.getClass())) {
+            if (item == null) {
+                nodes.add(JsonNodeFactory.instance.nullNode());
+            } else if (PersistableItem.class.isAssignableFrom(item.getClass())) {
                 iterator.remove();
                 PersistableItem fieldItem = (PersistableItem) item;
-                save(fieldItem);
+                persistenceService.save(fieldItem);
                 ObjectNode newNode = JsonNodeFactory.instance.objectNode();
                 newNode.put("id", fieldItem.getId());
                 newNode.put("version", fieldItem.getVersion());
                 newNode.put("class", fieldItem.getClass().getCanonicalName());
                 nodes.add(newNode);
             } else if (item instanceof Map) {
-                serializeMap((ObjectNode) arrayItemNode, (Map) item);
+                serializeMap((ObjectNode) arrayItemNode, (Map) item, persistenceService);
             } else {
-                serializeObject((ObjectNode) arrayItemNode, item);
+                serializeObject((ObjectNode) arrayItemNode, item, persistenceService);
             }
         }
 
@@ -214,10 +212,11 @@ public abstract class JsonPersistenceService implements PersistenceService {
     }
 
     @SuppressWarnings("unchecked")
-    private void serializeObject(ObjectNode objectNode, Object parent) throws PersistenceException, IllegalAccessException {
-        Iterator<Map.Entry<String, JsonNode>> iterator = objectNode.fields();
+    private void serializeObject(ObjectNode objectNode, Object parent, PersistenceService persistenceService)
+            throws PersistenceException, IllegalAccessException {
+        Iterator<Entry<String, JsonNode>> iterator = objectNode.fields();
         while (iterator.hasNext()) {
-            Map.Entry<String, JsonNode> entry = iterator.next();
+            Entry<String, JsonNode> entry = iterator.next();
             Field field = findFieldInClass(parent.getClass(), entry.getKey());
             if (field == null) {
                 throw new PersistenceException("Cannot find field " + entry.getKey() + " in " + parent.getClass());
@@ -225,29 +224,34 @@ public abstract class JsonPersistenceService implements PersistenceService {
             if (PersistableItem.class.isAssignableFrom(field.getType())) {
                 field.setAccessible(true);
                 PersistableItem fieldItem = (PersistableItem) field.get(parent);
-                save(fieldItem);
-                ObjectNode newNode = objectNode.putObject(field.getName());
-                newNode.put("id", fieldItem.getId());
-                newNode.put("version", fieldItem.getVersion());
-                newNode.put("class", fieldItem.getClass().getCanonicalName());
+                if (fieldItem == null) {
+                    objectNode.putNull(field.getName());
+                } else {
+                    persistenceService.save(fieldItem);
+                    ObjectNode newNode = objectNode.putObject(field.getName());
+                    newNode.put("id", fieldItem.getId());
+                    newNode.put("version", fieldItem.getVersion());
+                    newNode.put("class", fieldItem.getClass().getCanonicalName());
+                }
             } else if (entry.getValue() instanceof ObjectNode) {
                 if (Map.class.isAssignableFrom(field.getType())) {
                     field.setAccessible(true);
-                    serializeMap((ObjectNode) entry.getValue(), (Map) field.get(parent));
+                    serializeMap((ObjectNode) entry.getValue(), (Map) field.get(parent), persistenceService);
                 } else {
-                    serializeObject((ObjectNode) entry.getValue(), field.get(parent));
+                    serializeObject((ObjectNode) entry.getValue(), field.get(parent), persistenceService);
                 }
             } else if (entry.getValue() instanceof ArrayNode) {
                 field.setAccessible(true);
-                serializeArray((ArrayNode) entry.getValue(), (List<Object>) field.get(parent));
+                serializeArray((ArrayNode) entry.getValue(), (List<Object>) field.get(parent), persistenceService);
             }
         }
     }
 
-    String serialize(PersistableItem item) throws PersistenceException {
+    @Override
+    public String serialize(PersistableItem item, PersistenceService persistenceService) throws PersistenceException {
         try {
             ObjectNode baseNode = objectMapper.valueToTree(item);
-            serializeObject(baseNode, item);
+            serializeObject(baseNode, item, persistenceService);
 
             if (log.isTraceEnabled()) {
                 String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(baseNode);

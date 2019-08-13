@@ -17,7 +17,7 @@ public class MongoPersistenceServiceTest extends PersistenceServiceTest {
     public void setUp() throws PersistenceException {
         mongoClient = MongoClients.create();
         database = mongoClient.getDatabase(DB_NAME);
-        persistenceService = new MongoDbJsonPersistenceService(database);
+        persistenceService = null;//new MongoDbJsonPersistenceService(database);
 
         createTestData();
     }

@@ -6,10 +6,8 @@ import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.logging.ConfigurationLogService;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
-import uk.ac.diamond.daq.persistence.service.impl.JsonPersistenceService;
 
 import java.lang.reflect.Field;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,13 +21,29 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
         this.persistenceService = persistenceService;
     }
 
+    @Override
+    public List<LogToken> listChanges(long persistenceId) throws PersistenceException {
+        List<LogToken> result = new ArrayList<>();
+
+        for (LogToken logToken : logTokens) {
+            for (ItemReference itemReference : logToken.getItemReferences()) {
+                if (persistenceId == itemReference.getId()) {
+                    result.add(logToken);
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
     private static void addItemReferences(Object object, Class clazz, Set<ItemReference> itemReferences) throws IllegalAccessException {
         if (PersistableItem.class.isAssignableFrom(clazz)) {
             PersistableItem item = (PersistableItem) object;
             itemReferences.add(new ItemReference(item.getId(), item.getVersion(), item.getClass()));
         }
         for (Field field : clazz.getDeclaredFields()) {
-            if (JsonPersistenceService.isPersistable(field)) {
+            if (PersistenceService.isPersistable(field)) {
                 field.setAccessible(true);
                 addItemReferences(field.get(object), field.getType(), itemReferences);
             }
@@ -38,22 +52,6 @@ public class InMemoryConfigurationLogService implements ConfigurationLogService 
         if (parent != null) {
             addItemReferences(object, parent, itemReferences);
         }
-    }
-
-    @Override
-    public List<LogToken> listChanges(BigInteger persistenceId) throws PersistenceException {
-        List<LogToken> result = new ArrayList<>();
-
-        for (LogToken logToken : logTokens) {
-            for (ItemReference itemReference : logToken.getItemReferences()) {
-                if (persistenceId.equals(itemReference.getId())) {
-                    result.add(logToken);
-                    break;
-                }
-            }
-        }
-
-        return result;
     }
 
     @Override

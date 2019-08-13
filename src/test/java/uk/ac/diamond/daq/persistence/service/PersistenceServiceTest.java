@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.data.*;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -18,7 +17,7 @@ public abstract class PersistenceServiceTest {
     private static final String CONCRETE_ITEM_B_NAME_2 = "Tomo Scan 2";
     private static final String CONCRETE_ITEM_CONTAINER_NAME = "Load Trigger";
     private static final String CONCRETE_ITEM_A_CLASS_UNIQUE = "Irn Bru";
-    private static final BigInteger INVALID_ID = new BigInteger("-1");
+    private static final long INVALID_ID = -1;
 
     protected PersistenceService persistenceService;
 
@@ -124,7 +123,7 @@ public abstract class PersistenceServiceTest {
     @Test(expected = PersistenceException.class)
     public void testNothingOfID() throws PersistenceException {
         //Searches for an ID which will not exist in the DB, uses most basic class i.e. PersistableItem to ensure checking all
-        persistenceService.get(new BigInteger("-1"), PersistableItem.class);
+        persistenceService.get(-1, PersistableItem.class);
     }
 
     @Test(expected = PersistenceException.class)
@@ -290,8 +289,8 @@ public abstract class PersistenceServiceTest {
         assertEquals("No items should be found as looking for wrong class", 0, searchResult3.getRows().size());
         assertEquals("Created the wrong headings", 0, searchResult3.getHeadings().size());
 
-        final BigInteger idAll = searchResult.getRows().get(0).getPersistenceId();
-        final BigInteger idClass = searchResult2.getRows().get(0).getPersistenceId();
+        final long idAll = searchResult.getRows().get(0).getPersistenceId();
+        final long idClass = searchResult2.getRows().get(0).getPersistenceId();
         assertEquals("Wrong item found when searching for all", concreteItemB.getId(), idAll);
         assertEquals("Wrong item found when searching only class", concreteItemB.getId(), idClass);
 
@@ -317,8 +316,8 @@ public abstract class PersistenceServiceTest {
         //(Id) + ConcreteA 1, ConcreteA 2, ConcreteA 3, Name
         assertEquals("Not all headings created", 4, searchResult2.getHeadings().size());
 
-        final BigInteger id = searchResult.getRows().get(0).getPersistenceId();
-        final BigInteger id2 = searchResult2.getRows().get(0).getPersistenceId();
+        final long id = searchResult.getRows().get(0).getPersistenceId();
+        final long id2 = searchResult2.getRows().get(0).getPersistenceId();
         assertEquals("Wrong item found when searching by concrete class", concreteItemA.getId(), id);
         assertEquals("Wrong item found when searching by abstract classs", concreteItemA.getId(), id2);
         printSearchResults("Search for " + ConcreteItemA.CLASS_UNIQUE_FIELD + ": " + CONCRETE_ITEM_A_CLASS_UNIQUE, searchResult);
@@ -338,7 +337,7 @@ public abstract class PersistenceServiceTest {
         //(Id) + ConcreteA 1, ConcreteA 2, ConcreteA 3, ConcreteB 1, Concrete B 3, Name
         assertEquals("Not all headings created", 6, searchResult.getHeadings().size());
 
-        List<BigInteger> resultIds = new ArrayList<BigInteger>();
+        List<Long> resultIds = new ArrayList<>();
         for (SearchResultRow result : searchResult.getRows()) {
             resultIds.add(result.getPersistenceId());
         }
@@ -352,7 +351,7 @@ public abstract class PersistenceServiceTest {
         //(Id) + ConcreteA 1, ConcreteA 2, ConcreteA 3, Name
         assertEquals("Not all headings created", 4, searchResult.getHeadings().size());
 
-        resultIds = new ArrayList<BigInteger>();
+        resultIds = new ArrayList<>();
         for (SearchResultRow result : searchResult2.getRows()) {
             resultIds.add(result.getPersistenceId());
         }
@@ -376,7 +375,7 @@ public abstract class PersistenceServiceTest {
         //(Id) + ConcreteA 1, ConcreteA 2, ConcreteA 3, Name
         assertEquals("Not all headings created", 4, searchResult.getHeadings().size());
 
-        List<BigInteger> resultIds = new ArrayList<BigInteger>();
+        List<Long> resultIds = new ArrayList<>();
         for (SearchResultRow result : searchResult.getRows()) {
             resultIds.add(result.getPersistenceId());
         }
@@ -389,7 +388,7 @@ public abstract class PersistenceServiceTest {
         //(Id) + ConcreteA 1, ConcreteA 2, ConcreteA 3, Name
         assertEquals("Not all headings created", 4, searchResult.getHeadings().size());
 
-        resultIds = new ArrayList<BigInteger>();
+        resultIds = new ArrayList<>();
         for (SearchResultRow result : searchResult2.getRows()) {
             resultIds.add(result.getPersistenceId());
         }
@@ -442,7 +441,7 @@ public abstract class PersistenceServiceTest {
         persistenceService.save(trigger1);
         persistenceService.save(trigger2);
 
-        assertTrue("Contained item did not increment version", concreteItemB.getId().compareTo(new BigInteger("0")) > 0);
+        assertTrue("Contained item did not increment version", concreteItemB.getId() > 0);
         assertTrue("Version of List did not increment on change of versionable value of its contents", trigger1.getVersion() > originalVersion);
         assertTrue("Version of List incremented on change of non-versionable value of its contents", trigger2.getVersion() == consistentVersion);
 
@@ -527,7 +526,7 @@ public abstract class PersistenceServiceTest {
 
     @Test
     public void testChangingNameCreatesNewId() throws PersistenceException {
-        final BigInteger originalId = concreteItemB.getId();
+        final long originalId = concreteItemB.getId();
         concreteItemB.setProperty1(101);
         persistenceService.save(concreteItemB);
 
@@ -559,7 +558,7 @@ public abstract class PersistenceServiceTest {
         printSearchResults("Search for " + CONCRETE_ITEM_CONTAINER_NAME, searchResult);
         assertEquals("Only one item should be found", 1, searchResult.getRows().size());
 
-        final BigInteger id = searchResult.getRows().get(0).getPersistenceId();
+        final long id = searchResult.getRows().get(0).getPersistenceId();
         assertEquals("Wrong item found", trigger1.getId(), id);
         final AbstractItemContainer abstractItemContainer2 = persistenceService.get(id, ConcreteItemContainer.class);
         abstractItemContainer2.execute();
@@ -752,16 +751,16 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteDoesntRetrieve() throws PersistenceException {
-        final BigInteger id = concreteItemA.getId();
-        persistenceService.delete(concreteItemA);
+    public void deleteDoesntRetrieve() throws PersistenceException{
+        final long id = concreteItemA.getId();
+        persistenceService.delete(concreteItemA.getId());
         persistenceService.get(id, ConcreteItemA.class);
 
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteUsingID() throws PersistenceException {
-        final BigInteger id = concreteItemA.getId();
+    public void deleteUsingID() throws PersistenceException{
+        final long id = concreteItemA.getId();
         persistenceService.delete(id);
         persistenceService.get(id, ConcreteItemA.class);
 
@@ -777,19 +776,19 @@ public abstract class PersistenceServiceTest {
     public void deleteExceptsContainerRetrieval() throws PersistenceException {
         ConcreteItemContainer container = new ConcreteItemContainer("name", concreteItemA, 1);
         persistenceService.save(container);
-        persistenceService.delete(concreteItemA);
+        persistenceService.delete(concreteItemA.getId());
         persistenceService.get(container.getId(), ConcreteItemContainer.class);
 
     }
 
-    @Test(expected = PersistenceException.class)
-    public void deleteExceptsContainerRetrievalThroughLayers() throws PersistenceException {
+    @Test
+    public void deleteExceptsContainerRetrievalThroughLayers() throws PersistenceException{
+        //TODO: is this line needed?
         ConcreteItemContainer container = new ConcreteItemContainer("name", concreteItemA, 1);
         ConcreteListContainer containerContainer = new ConcreteListContainer("all-enveloping");
         persistenceService.save(containerContainer);
-        persistenceService.delete(concreteItemA);
+        assertTrue(persistenceService.delete(concreteItemA.getId()));
         persistenceService.get(containerContainer.getId(), ConcreteListContainer.class);
-
     }
 
     @Test(expected = PersistenceException.class)
@@ -797,7 +796,7 @@ public abstract class PersistenceServiceTest {
         ConcreteMapContainer container = new ConcreteMapContainer("name");
         container.addItem("itemA", concreteItemA);
         persistenceService.save(container);
-        persistenceService.delete(concreteItemA);
+        persistenceService.delete(concreteItemA.getId());
         persistenceService.get(container.getId(), ConcreteMapContainer.class);
 
     }

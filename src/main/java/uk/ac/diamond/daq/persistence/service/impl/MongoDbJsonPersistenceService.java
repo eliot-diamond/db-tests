@@ -17,7 +17,7 @@ import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.*;
 
-public class MongoDbJsonPersistenceService extends JsonPersistenceService {
+public class MongoDbJsonPersistenceService {
     private static final Logger logger = LoggerFactory.getLogger(MongoDbJsonPersistenceService.class);
 
     private static final String POJO_ID = "id";     // id field in our objects
@@ -44,10 +44,9 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
         }
     }
 
-    @Override
     public void save(PersistableItem item) throws PersistenceException {
         setIds(item);
-        final String jsonString = serialize(item);
+        final String jsonString = null;//serialize(item);
         final String jsonWithMongoId = jsonString.replaceAll(JAVA_TO_MONGO_PATTERN, JAVA_TO_MONGO_REPLACEMENT);
         final Document document = Document.parse(jsonWithMongoId);
 
@@ -72,9 +71,9 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
             return;
         }
         // Process the top-level id
-        if (item.getId().equals(PersistableItem.INVALID_ID)) {
+        if (item.getId() == PersistableItem.INVALID_ID) {
             final ObjectId objectId = new ObjectId();
-            item.setId(new BigInteger(objectId.toHexString(), HEX_RADIX));
+            //item.setId(new BigInteger(objectId.toHexString(), HEX_RADIX));
         }
         // Loop over fields
         final Class<? extends PersistableItem> classObject = item.getClass();
@@ -112,12 +111,10 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
         }
     }
 
-    @Override
     public void delete(BigInteger persistenceId) {
 
     }
 
-    @Override
     public void delete(PersistableItem item) {
 
     }
@@ -132,29 +129,24 @@ public class MongoDbJsonPersistenceService extends JsonPersistenceService {
         return getCollection(clazz).find(searchDoc);
     }
 
-    @Override
     public <T extends PersistableItem> SearchResult get(Class<T> clazz) {
         return get(Collections.emptyMap(), clazz);
     }
 
-    @Override
     public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz) {
         return convertDocumentsToSearchResult(searchForDocuments(searchParameters, clazz));
     }
 
-    @Override
     public <T extends PersistableItem> T get(BigInteger persistenceId, Class<T> clazz) throws PersistenceException {
         final Map<String, Object> idParam = ImmutableMap.of(MONGO_ID, bigIntegerToObjectId(persistenceId));
         final FindIterable<Document> documents = searchForDocuments(idParam, clazz);
         return convertDocumentToObject(documents.first());
     }
 
-    @Override
     public List<Long> getVersions(BigInteger persistenceId) {
         return null;
     }
 
-    @Override
     public <T extends PersistableItem> T getArchive(BigInteger persistenceId, long version, Class<T> clazz) {
         return null;
     }

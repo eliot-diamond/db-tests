@@ -1,19 +1,16 @@
 package uk.ac.diamond.daq.persistence.data;
 
 import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
+import uk.ac.diamond.daq.persistence.annotation.Persisted;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.Objects;
 
 public abstract class PersistableItem implements Serializable {
-    public static final BigInteger INVALID_ID = new BigInteger("-1");
+    public static final long INVALID_ID = -1;
 
-    private static final int HEX_RADIX = 16;
-
-    @Searchable("id")
-    private BigInteger id;
+    @Persisted(key = true)
+    private long id;
 
     @Listable(value = "Version", priority = 1000)
     private long version;
@@ -23,24 +20,20 @@ public abstract class PersistableItem implements Serializable {
         this.version = 0;
     }
 
-    public BigInteger getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(BigInteger id) {
+    public void setId(long id) {
         this.id = id;
-    }
-
-    public void setId(String hexString) {
-        this.id = new BigInteger(hexString, HEX_RADIX);
-    }
-
-    public long getVersion() {
-        return version;
     }
 
     public void setVersion(long version) {
         this.version = version;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public void incrementVersion() {
@@ -52,8 +45,7 @@ public abstract class PersistableItem implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PersistableItem that = (PersistableItem) o;
-        return version == that.version &&
-                Objects.equals(id, that.id);
+        return version == that.version && id == that.id;
     }
 
     @Override

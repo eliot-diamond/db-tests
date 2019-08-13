@@ -5,7 +5,6 @@ import uk.ac.diamond.daq.persistence.data.*;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -13,27 +12,6 @@ import static org.junit.Assert.*;
 public class ConfigurationLogServiceTest {
     ConfigurationLogService configurationLogService;
     PersistenceService persistenceService;
-
-    private static ItemReference findItemReference(LogToken logToken, BigInteger id, long version) {
-        for (ItemReference itemReference : logToken.getItemReferences()) {
-            if (itemReference.getId().equals(id)) {
-                if (version == -1 || logToken.getVersion() == version) {
-                    return itemReference;
-                }
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    private static ItemReference findItemReference(LogToken logToken, BigInteger id) {
-        return findItemReference(logToken, id, -1);
-    }
-
-    private static ItemReference findItemReference(LogToken logToken, PersistableItem item) {
-        return findItemReference(logToken, item.getId(), item.getVersion());
-    }
 
     @Test
     public void logFirstSimpleItem() throws PersistenceException {
@@ -47,6 +25,27 @@ public class ConfigurationLogServiceTest {
         assertEquals("Must contain only one log token", 1, logTokens.size());
         assertEquals("Only one item reference is stored", 1, logTokens.get(0).getItemReferences().size());
         assertNotNull("Item reference has ID same as Items", findItemReference(logTokens.get(0), item));
+    }
+
+    private static ItemReference findItemReference(LogToken logToken, long id, long version) {
+        for (ItemReference itemReference : logToken.getItemReferences()) {
+            if (itemReference.getId() == id) {
+                if (version == -1 || logToken.getVersion() == version) {
+                    return itemReference;
+                }
+                return null;
+            }
+        }
+        
+        return null;
+    }
+
+    private static ItemReference findItemReference(LogToken logToken, long id) {
+        return findItemReference(logToken, id, -1);
+    }
+
+    private static ItemReference findItemReference(LogToken logToken, PersistableItem item) {
+        return findItemReference(logToken, item.getId(), item.getVersion());
     }
 
     @Test

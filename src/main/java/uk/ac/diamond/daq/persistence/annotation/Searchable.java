@@ -7,4 +7,8 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD, ElementType.FIELD})
 public @interface Searchable {
     String value();
+
+    boolean key() default true;
+
+    int priority() default -1;
 }
