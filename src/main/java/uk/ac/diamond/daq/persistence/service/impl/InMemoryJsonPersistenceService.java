@@ -197,7 +197,7 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
                 }
             }
         }
-        throw new PersistenceException("No item found width id of " + persistenceId);
+        throw new PersistenceException("No item found with id of " + persistenceId);
     }
 
     @Override
@@ -221,6 +221,6 @@ public class InMemoryJsonPersistenceService extends JsonPersistenceService {
                 }
             }
         }
-        throw new PersistenceException("No item found width id of " + persistenceId + " and version " + version);
+        throw new PersistenceException("No item found with id of " + persistenceId + " and version " + version);
     }
 }

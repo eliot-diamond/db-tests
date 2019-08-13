@@ -122,13 +122,13 @@ public abstract class PersistenceServiceTest {
         persistenceService.get(new BigInteger("-1"), PersistableItem.class);
     }
 
-    @Test
     /**
      * You persist a Tomography scan, then search for *all scans* and retrieve your scan cast to Scan.
      * You make changes to the scan and persist it once more.
      * Should ID be maintained [and hence version incremented] or should it have a new ID [and hence version=0]?
      * Should it still be retrievable as a Tomo scan?
      */
+    @Test
     public void testCastingToSuperAndID() throws PersistenceException {
         ConcreteItemBsubA subClass = new ConcreteItemBsubA("sub", 2, 4, 8);
         persistenceService.save(subClass);
@@ -146,7 +146,7 @@ public abstract class PersistenceServiceTest {
         searchParameters.put(AbstractItem.SEARCH_NAME_FIELD, "sub");
 
         final SearchResult searchResult = persistenceService.get(searchParameters, ConcreteItemBsubA.class);
-        assertEquals("Should only find the item stored as the subclass", 1, searchResult.getRows().size());
+        assertEquals("Find one item as casting does not change Id", 1, searchResult.getRows().size());
 
     }
 
@@ -154,7 +154,9 @@ public abstract class PersistenceServiceTest {
     /**
      * You persist a Tomography scan, then search for *all scans* and retrieve your scan cast to Scan.
      * You make changes to the scan and persist it once more.
-     * Should it still be searchable for on the Tomography specific fields?
+     * Should still be searchable for on the Tomography specific fields, as deserialiser ensures everything is stored
+     * as itself, not as superclass.
+     *
      */
     @Test
     public void testSubclassSpecificFields() throws PersistenceException {
@@ -167,17 +169,17 @@ public abstract class PersistenceServiceTest {
         ConcreteItemB superClass = persistenceService.get(subClass.getId(), ConcreteItemB.class);
 
         superClass.setProperty1(4);
+        superClass.setName("newName"); // Otherwise would overwrite old one
         persistenceService.save(superClass);
 
         final Map<String, String> searchParameters = new HashMap<>();
         searchParameters.put(ConcreteItemBsubA.UNIQUE_FIELD, String.valueOf(SEARCH_VALUE));
         final SearchResult searchResult2 = persistenceService.get(searchParameters, ConcreteItemBsubA.class);
-        assertEquals("Should only find the item stored as the subclass", 1, searchResult2.getRows().size());
 
-        //TODO Should this get subclass only (because has field), sub + cast to super (because has field if cast) or
-        // neither because super doesn't have field?
+        assertEquals("Find both items as both stored as subclass.", 2, searchResult2.getRows().size());
+
         final SearchResult searchResult3 = persistenceService.get(searchParameters, ConcreteItemB.class);
-        assertEquals("Should only find the item stored as the subclass", 1, searchResult3.getRows().size());
+        assertEquals("Find both items as both stored as subclass.", 2, searchResult3.getRows().size());
     }
 
 
@@ -217,7 +219,7 @@ public abstract class PersistenceServiceTest {
 
         printSearchResults("B items including B_A", searchResult2);
 
-        assertEquals("Expected 3 results: A, A2, subClass", 3, searchResult2.getRows().size());
+        assertEquals("Expected 3 results: B, B2, subClass", 3, searchResult2.getRows().size());
         //(Name, Id) + ConcreteB 1, Concrete B3, Concrete B_A 4
         assertEquals("Not all headings created", 3, headings2.size());
 
@@ -399,12 +401,6 @@ public abstract class PersistenceServiceTest {
         assertNotSame(abstractItemContainer2, trigger1);
     }
 
-    /**
-     * Should saving a container save its items?
-     * Should get(A) where A contains B get the latest B or the B that existed when A went into the database.
-     * These tests may need to be rewritten, they were written with the assumption that saving a container saves the item
-     * and that what goes in is what comes out.
-     */
     @Test
     public void testContainerHoldingItemThatUpdates() throws PersistenceException {
         final ConcreteItemContainer trigger1 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 78);
@@ -419,35 +415,26 @@ public abstract class PersistenceServiceTest {
 
         final AbstractItemContainer retrievedOriginal = persistenceService.get(trigger1.getId(), AbstractItemContainer.class);
         //TODO: See comment on test method
-        assertEquals("Ought to retrieve version of item that went into database with container", 1, retrievedOriginal.getAbstractItem().getVersion());
+        assertEquals("Ought to retrieve latest version of item in container", concreteItemB.getVersion(), retrievedOriginal.getAbstractItem().getVersion());
 
     }
 
-    /**
-     * Should saving a container save its items?
-     * Should get(A) where A contains B get the latest B or the B that existed when A went into the database.
-     * These tests may need to be rewritten, they were written with the assumption that saving a container saves the item
-     * and that what goes in is what comes out.
-     */
     @Test
     public void testTwoContainersHoldingItem() throws PersistenceException {
         final ConcreteItemContainer container1 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 78);
         final ConcreteItemContainer container2 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 87);
 
-        persistenceService.save(container1);
         concreteItemB.setProperty1(100);
         persistenceService.save(container2);
 
-        final AbstractItemContainer abstractItemContainer1 = persistenceService.get(container1.getId(), ConcreteItemContainer.class);
         final AbstractItemContainer abstractItemContainer2 = persistenceService.get(container2.getId(), ConcreteItemContainer.class);
 
-        //TODO: See comment on test method
-        assertEquals("The version that goes into the database within a container should be the version that comes out", 0, abstractItemContainer1.getAbstractItem().getVersion());
+        assertEquals("The latest version should come out", 1, abstractItemContainer2.getAbstractItem().getVersion());
 
-        assertNotEquals(abstractItemContainer1.getAbstractItem().getVersion(), abstractItemContainer2.getAbstractItem().getVersion());
+        assertEquals(concreteItemB.getVersion(), abstractItemContainer2.getAbstractItem().getVersion());
 
         // Equality needs to be written in a way that two different versions of a held object are not equal
-        assertNotEquals("Two containers with the same names, properties, items but different versions of a held item should not be equal", abstractItemContainer1, abstractItemContainer2);
+        assertNotEquals("Two containers with the same names, properties, items but different versions of a held item should not be equal", container1, abstractItemContainer2);
 
         // Equality needs to be written in a way that two same versions of a held object are equal (when name, properties etc. are same)
         assertEquals("Two containers with the same names, properties, items and versions of items should be equal", abstractItemContainer2, container2);
@@ -456,11 +443,11 @@ public abstract class PersistenceServiceTest {
         assertNotSame(abstractItemContainer2.getAbstractItem(), container2.getAbstractItem());
     }
 
+
+
     /**
-     * Should saving a container save its items?
-     * Should get(A) where A contains B, C and B and C both contain D ensure that D has the same version for both B, C?
-     * These tests may need to be rewritten, they were written with the assumption above
-     * Should B's D and C's D be the same item? Presumption is Yes.
+     * get(A) where A contains B, C and B and C both contain D should get a single reference for D.
+     * D should be the latest version of D.
      */
     @Test
     public void twoContainersHoldingSameItemInAPlan() throws PersistenceException {
@@ -468,34 +455,8 @@ public abstract class PersistenceServiceTest {
         final ConcreteItemContainer trigger2 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 39);
 
         persistenceService.save(trigger1);
-        concreteItemB.setProperty1(7);
-        persistenceService.save(trigger2);
-
-        String planName = "Plan 1";
-        ConcreteListContainer concreteListContainer1 = new ConcreteListContainer(planName);
-        concreteListContainer1.addTrigger(trigger1);
-        concreteListContainer1.addTrigger(trigger2);
-        persistenceService.save(concreteListContainer1);
-
-        ConcreteListContainer retrievedListContainer = persistenceService.get(concreteListContainer1.getId(), ConcreteListContainer.class);
-        assertEquals("Retrieved 2 different versions of the same object within a list", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getVersion(), retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem().getVersion());
-        assertSame("Have two different pointers to what should be the same item", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
-    }
-
-    /**
-     * Should saving a container save its items?
-     * Should get(A) where A contains B, C and B and C both contain D ensure that D has the same version for both B, C?
-     * These tests may need to be rewritten, they were written with the assumption above
-     * Should B's D and C's D be the same item? Presumption is Yes.
-     */
-    @Test
-    public void twoContainersHoldingSimilarItemInAPlan() throws PersistenceException {
-        final ConcreteItemContainer trigger1 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 78);
-        final ConcreteItemContainer trigger2 = new ConcreteItemContainer(CONCRETE_ITEM_CONTAINER_NAME, concreteItemB, 39);
-
-        persistenceService.save(trigger1);
         concreteItemB.setName("newItem");
-        persistenceService.save(trigger2);
+        trigger2.setName("newContainerName");
 
         String planName = "Plan 1";
         ConcreteListContainer concreteListContainer1 = new ConcreteListContainer(planName);
@@ -504,12 +465,12 @@ public abstract class PersistenceServiceTest {
         persistenceService.save(concreteListContainer1);
 
         ConcreteListContainer retrievedListContainer = persistenceService.get(concreteListContainer1.getId(), ConcreteListContainer.class);
-        assertNotSame("Should be different items as changing name changes ID", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
+
+        assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newContainerName", retrievedListContainer.getAbstractItemContainers().get(1).getName());
+        assertEquals("Saving a container should save all it contains and retrieving one should get the latest version","newItem",retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getName());
+        assertSame("Should be same items as both Triggers use ConcreteB should retrieve latest for both", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
     }
 
-    /**
-     * Do we want persisting a container to persists its contained object?
-     */
     @Test
     public void testSavingContainerSavesAllContainedItem() throws PersistenceException {
         concreteItemB.setName("toBeFound");
@@ -555,8 +516,8 @@ public abstract class PersistenceServiceTest {
 
     /**
      * See also testSavingContainerSavesAllContainedItem and testTwoContainersHoldingItem:
-     * Do we want saving A that holds B to save B?
-     * Do we want retrieving A to retrieve the most recent B or the one that went into the persistence?
+     * Saving A which contains B should save B.
+     * Retrieving A after B has been updated should return the updated B.
      */
     @Test
     public void saveMap() throws PersistenceException {
@@ -568,11 +529,60 @@ public abstract class PersistenceServiceTest {
         persistenceService.save(concreteMapContainer1);
 
         assertNotEquals("Saving a map did not save its contained items", AbstractItem.INVALID_ID, unsavedItem.getId());
-        concreteItemB.setName("newName");
+        concreteItemB.setProperty1(12);
         persistenceService.save(concreteItemB);
 
         ConcreteMapContainer concreteMapContainer2 = persistenceService.get(concreteMapContainer1.getId(), ConcreteMapContainer.class);
-        assertNotEquals("Retrieved a newer version of an item contained in the map than went in ", "newName", concreteMapContainer2.getItem("itemB").getName());
+        assertEquals("Retrieved an old version of an item contained in the map", "newName", concreteMapContainer2.getItem("itemB").getName());
     }
 
+   //TODO: for next 6 tests: do we want to break on persisting a null at any point in a chain of items?
+   //TODO: Do we want a NullPointer or a PersistenceException?
+
+    @Test(expected = PersistenceException.class)
+    public void saveListNull() throws PersistenceException{
+        ConcreteItemContainer nullHolder = null;
+        persistenceService.save(nullHolder);
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void saveNulls() throws PersistenceException{
+
+        persistenceService.save(null);
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void saveContainedNull() throws PersistenceException{
+        ConcreteItemContainer nullHolder = new ConcreteItemContainer("nullName", null, 0);
+        persistenceService.save(nullHolder);
+
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void saveMapContainingNull() throws PersistenceException{
+        ConcreteMapContainer concreteMapContainer1 = new ConcreteMapContainer("nullItem");
+        concreteMapContainer1.addItem("itemA", null);
+        persistenceService.save(concreteMapContainer1);
+
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void saveContainerContainingListContainingNull() throws PersistenceException{
+        ConcreteListContainer concreteListContainer1 = new ConcreteListContainer("null Holder Holder");
+        ConcreteItemContainer nullHolder = new ConcreteItemContainer("nullHolder", null, 0);
+
+        concreteListContainer1.addTrigger(nullHolder);
+        persistenceService.save(concreteListContainer1);
+
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void saveContainerContainingNullList() throws PersistenceException{
+        ConcreteListContainer concreteListContainer1 = new ConcreteListContainer("null Holder");
+        ConcreteItemContainer nullContainer = null;
+
+        concreteListContainer1.addTrigger(nullContainer);
+        persistenceService.save(concreteListContainer1);
+
+    }
 }
