@@ -192,7 +192,7 @@ public abstract class PersistenceServiceTest {
         final Map<String, String> searchParameters = new HashMap<>();
         searchParameters.put(AbstractItem.SEARCH_NAME_FIELD, "sub");
 
-        final SearchResult searchResult = persistenceService.get(searchParameters, ConcreteItemBsubA.class);
+        final SearchResult searchResult = persistenceService.get(ConcreteItemBsubA.class);
         assertEquals("Changing name should change id but not type", 2, searchResult.getRows().size());
 
     }
@@ -236,13 +236,14 @@ public abstract class PersistenceServiceTest {
         printSearchResults("All Items", searchResult);
 
         final Set<SearchResultHeading> headings = searchResult.getHeadings();
-        //(Id) + ConcreteA 1, Concrete A 2, Concrete A3, Concrete B 1, Concrete B 3, Name
+        //(Id) + Name, 1 (A+B), 2, 3 (B), 3 (A)
+        // As ConcreteA has a @Listable on property3 it shouldn't join wtih ConcreteB property3 but the property 1s should
         printSearchResults("All Items", searchResult);
-        assertEquals("Expected 6 results: TypeA 1,2,3; Type B 1,3; Name: Type B properties 1,3 are different than type A properties, even though they share a name and (in the case of prop 1) same type. Name is common", 5, headings.size());
+        assertEquals("Expected 5 results: Name, Property 1, 2, 3B, 3A (as uniqueProperty); same field name should join unless listable under a different name", 5, headings.size());
 
         final SearchResult searchResult2 = persistenceService.get(ConcreteItemA.class);
         assertEquals("Expected 2 results", 2, searchResult2.getRows().size());
-        final Set<SearchResultHeading> headings2 = searchResult.getHeadings();
+        final Set<SearchResultHeading> headings2 = searchResult2.getHeadings();
         //(Id) + ConcreteA 1, Concrete A 2, Concrete A3, Name
         assertEquals("Not all headings created", 4, headings2.size());
         printSearchResults("All ConcreteA Items", searchResult);
@@ -677,7 +678,7 @@ public abstract class PersistenceServiceTest {
         persistenceService.save(concreteItemB);
 
         ConcreteMapContainer concreteMapContainer2 = persistenceService.get(concreteMapContainer1.getId(), ConcreteMapContainer.class);
-        assertEquals("Retrieved an old version of an item contained in the map", "newName", concreteMapContainer2.getItem("itemB").getName());
+        assertEquals("Retrieved an old version of an item contained in the map", 12, ((ConcreteItemB) concreteMapContainer2.getItem("itemB")).getProperty1());
     }
 
     @Test
@@ -865,6 +866,9 @@ public abstract class PersistenceServiceTest {
         ConcreteItemContainer containerB = new ConcreteItemContainer("hold_2", concreteItemC_2, 1);
 
         ConcreteListContainer superContainer = new ConcreteListContainer("");
+
+        superContainer.addTrigger(containerA);
+        superContainer.addTrigger(containerB);
 
         persistenceService.save(superContainer);
 
