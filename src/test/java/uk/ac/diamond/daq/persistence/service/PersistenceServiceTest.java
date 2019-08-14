@@ -612,7 +612,9 @@ public abstract class PersistenceServiceTest {
 
         assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newContainerName", retrievedListContainer.getAbstractItemContainers().get(1).getName());
         assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newItem", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getName());
-        assertSame("Should be same items as both Triggers use ConcreteB should retrieve latest for both", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
+        assertSame("Should be same items as both Triggers use ConcreteB should retrieve latest for both",
+                retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(),
+                retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
     }
 
     @Test
@@ -874,7 +876,9 @@ public abstract class PersistenceServiceTest {
 
         ConcreteListContainer retrievedContainer = persistenceService.get(superContainer.getId(), ConcreteListContainer.class);
 
-        assertNotSame("Deserialised 2 identical but distinct items as the same item", retrievedContainer.getAbstractItemContainers().get(0).getAbstractItem(), retrievedContainer.getAbstractItemContainers().get(0).getAbstractItem());
+        assertNotSame("Deserialised 2 identical but distinct items as the same item",
+                retrievedContainer.getAbstractItemContainers().get(0).getAbstractItem(),
+                retrievedContainer.getAbstractItemContainers().get(1).getAbstractItem());
         assertNotEquals("Two items written to same ID", concreteItemC_2, concreteItemC);
 
     }

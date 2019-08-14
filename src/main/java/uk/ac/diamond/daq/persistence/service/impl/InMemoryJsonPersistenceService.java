@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 import uk.ac.diamond.daq.persistence.data.ItemContainer;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
-import uk.ac.diamond.daq.persistence.json.JsonSerializer;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
@@ -21,14 +20,8 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService {
 
     private static long persistenceId = 255;
 
-    protected enum SaveAction {doNotSave, updateCurrent, createNewInstance}
-
     private Set<ItemContainer> activeItems = new HashSet<>();
     private Set<ItemContainer> archivedItems = new HashSet<>();
-
-    public InMemoryJsonPersistenceService(JsonSerializer jsonSerializer) {
-        super(jsonSerializer);
-    }
 
     @Override
     public long getNextPersistenceId() {
@@ -76,7 +69,7 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService {
 
         for (ItemContainer itemContainer : activeItems) {
             if (clazz.isAssignableFrom(itemContainer.getItemClass())) {
-                result.addResult(jsonSerializer.deserialize(itemContainer.getJson(), itemContainer.getItemClass(), this));
+                result.addResult(deserialize(itemContainer, new ArrayList<>()));
             }
         }
 
@@ -119,7 +112,7 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService {
 
         for (ItemContainer itemContainer : activeItems) {
             if (clazz.isAssignableFrom(itemContainer.getItemClass())) {
-                PersistableItem item = jsonSerializer.deserialize(itemContainer.getJson(), itemContainer.getItemClass(), this);
+                PersistableItem item = deserialize(itemContainer, new ArrayList<>());
                 Map<String, String> searchableValues = new HashMap<>();
                 getSearchableValues(item, item.getClass(), searchableValues);
                 searchParameters.forEach((key, value) -> {
