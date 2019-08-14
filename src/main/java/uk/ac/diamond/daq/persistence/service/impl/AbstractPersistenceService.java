@@ -85,7 +85,7 @@ public abstract class AbstractPersistenceService implements PersistenceService {
             item.setId(getNextPersistenceId());
             item.setVersion(0);
         } else if (saveAction == SaveAction.updateCurrent) {
-            item.incrementVersion();
+            item.setVersion(itemContainer.getVersion() + 1);
         }
 
         delete(item.getId());

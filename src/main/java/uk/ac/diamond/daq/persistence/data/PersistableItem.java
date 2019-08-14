@@ -36,10 +36,6 @@ public abstract class PersistableItem implements Serializable {
         return version;
     }
 
-    public void incrementVersion() {
-        version++;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
