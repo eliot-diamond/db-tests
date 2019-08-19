@@ -1,4 +1,4 @@
-package uk.ac.diamond.daq.persistence.service.impl;
+package uk.ac.diamond.daq.persistence.json.impl;
 
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
@@ -17,6 +17,7 @@ class ObjectPath {
         path = new ArrayList<>();
         fieldItem = null;
     }
+
     private ObjectPath(ObjectPath source) {
         this();
         for (PathElement sourcePathElement : source.path) {
@@ -65,7 +66,7 @@ class ObjectPath {
                     throw new PersistenceException("Cannot find stuff again");
                 }
             } else if (pathElement.type == PathElementType.field) {
-                Field field = AbstractPersistenceService.findFieldInClass(clazz, pathElement.fieldName);
+                Field field = DefaultJsonSerialiser.findFieldInClass(clazz, pathElement.fieldName);
                 field.setAccessible(true);
                 Object currentObject = field.get(lastObject);
                 if (currentObject == null) {

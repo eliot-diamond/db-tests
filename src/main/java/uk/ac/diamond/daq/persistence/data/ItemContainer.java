@@ -14,9 +14,13 @@ public class ItemContainer extends ItemReference {
     @JsonIgnore
     private List<Class<?>> classes;
 
-    public ItemContainer(PersistableItem item, String payload) {
-        super(item.getId(), item.getVersion(), item.getClass());
+    @JsonProperty
+    private String visitId;
+
+    public ItemContainer(PersistableItem item, String payload, String visitId) {
+        super(item);
         this.payload = payload;
+        this.visitId = visitId;
 
         createClasses();
     }
@@ -27,6 +31,14 @@ public class ItemContainer extends ItemReference {
         super(id, version, className);
 
         createClasses();
+    }
+
+    public ItemContainer(ItemContainer itemContainer, long version, String visitId) {
+        super(itemContainer);
+
+        payload = itemContainer.payload;
+        this.version = version;
+        this.visitId = visitId;
     }
 
     private void createClasses() {
@@ -50,5 +62,10 @@ public class ItemContainer extends ItemReference {
     @JsonIgnore
     public String getJson() {
         return payload;
+    }
+
+    @JsonIgnore
+    public String getVisitId() {
+        return visitId;
     }
 }

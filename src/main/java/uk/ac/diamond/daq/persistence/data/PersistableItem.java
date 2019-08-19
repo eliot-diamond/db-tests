@@ -9,7 +9,7 @@ import java.util.Objects;
 public abstract class PersistableItem implements Serializable {
     public static final long INVALID_ID = -1;
 
-    @Persisted(key = true)
+    @Persisted
     private long id;
 
     @Listable(value = "Version", priority = 1000)

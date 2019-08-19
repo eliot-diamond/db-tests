@@ -1,5 +1,6 @@
 package uk.ac.diamond.daq.persistence.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -10,13 +11,15 @@ public class ItemReference {
     private long id;
 
     @JsonProperty
-    private long version;
+    long version;
 
     @JsonIgnore
     private Class<? extends PersistableItem> itemClass;
 
     @SuppressWarnings("unchecked")
-    protected ItemReference(long id, long version, String className) throws ClassNotFoundException {
+    @JsonCreator
+    protected ItemReference(@JsonProperty("id") long id, @JsonProperty("version") long version,
+                            @JsonProperty("itemClass") String className) throws ClassNotFoundException {
         this.id = id;
         this.version = version;
         itemClass = (Class<? extends PersistableItem>) Class.forName(className);
@@ -28,6 +31,18 @@ public class ItemReference {
         this.itemClass = itemClass;
     }
 
+    public ItemReference(ItemReference itemReference) {
+        id = itemReference.id;
+        version = itemReference.version;
+        itemClass = itemReference.itemClass;
+    }
+
+    public ItemReference(PersistableItem item) {
+        id = item.getId();
+        version = item.getVersion();
+        itemClass = item.getClass();
+    }
+
     public long getId() {
         return id;
     }
@@ -36,6 +51,7 @@ public class ItemReference {
         return version;
     }
 
+    @JsonProperty
     public Class<? extends PersistableItem> getItemClass() {
         return itemClass;
     }
