@@ -28,12 +28,12 @@ public abstract class PersistableItem implements Serializable {
         this.id = id;
     }
 
-    public void setVersion(long version) {
-        this.version = version;
-    }
-
     public long getVersion() {
         return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 
     @Override

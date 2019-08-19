@@ -8,11 +8,9 @@ import java.util.Objects;
 
 public class ItemReference {
     @JsonProperty
-    private long id;
-
-    @JsonProperty
     long version;
-
+    @JsonProperty
+    private long id;
     @JsonIgnore
     private Class<? extends PersistableItem> itemClass;
 

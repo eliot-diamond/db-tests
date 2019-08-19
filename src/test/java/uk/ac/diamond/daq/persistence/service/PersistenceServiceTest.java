@@ -526,7 +526,6 @@ public abstract class PersistenceServiceTest {
 
     }
     */
-
     @Test
     public void testChangingNameCreatesNewId() throws PersistenceException {
         final long originalId = concreteItemB.getId();
@@ -756,7 +755,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteDoesntRetrieve() throws PersistenceException{
+    public void deleteDoesntRetrieve() throws PersistenceException {
         final long id = concreteItemA.getId();
         persistenceService.delete(concreteItemA.getId());
         persistenceService.get(id, ConcreteItemA.class);
@@ -764,7 +763,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void deleteUsingID() throws PersistenceException{
+    public void deleteUsingID() throws PersistenceException {
         final long id = concreteItemA.getId();
         persistenceService.delete(id);
         persistenceService.get(id, ConcreteItemA.class);
@@ -787,7 +786,7 @@ public abstract class PersistenceServiceTest {
     }
 
     @Test
-    public void deleteExceptsContainerRetrievalThroughLayers() throws PersistenceException{
+    public void deleteExceptsContainerRetrievalThroughLayers() throws PersistenceException {
         //TODO: is this line needed?
         ConcreteItemContainer container = new ConcreteItemContainer("name", concreteItemA, 1);
         ConcreteListContainer containerContainer = new ConcreteListContainer("all-enveloping");
@@ -972,7 +971,6 @@ public abstract class PersistenceServiceTest {
 
     }
     */
-
     @Test
     public void arbitraryVersionChanges() throws PersistenceException {
         long originalVersion = concreteItemB.getVersion();

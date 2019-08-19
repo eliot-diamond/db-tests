@@ -27,6 +27,35 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService i
         super(jsonSerialisationFactory, visitService);
     }
 
+    private static void getSearchableValues(Object item, Class<?> clazz, Map<String, String> searchableValues)
+            throws PersistenceException {
+        if (clazz == null || clazz.equals(Object.class)) {
+            return;
+        }
+
+        try {
+            for (Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(Searchable.class)) {
+                    Searchable searchable = field.getDeclaredAnnotation(Searchable.class);
+                    searchableValues.put(searchable.value(), field.get(item).toString());
+                } else if (PersistenceService.isPersistable(field)) {
+                    getSearchableValues(field.get(item), field.getType(), searchableValues);
+                }
+            }
+            for (Method method : clazz.getMethods()) {
+                if (method.isAnnotationPresent(Searchable.class)) {
+                    Searchable searchable = method.getDeclaredAnnotation(Searchable.class);
+                    searchableValues.put(searchable.value(), method.invoke(item).toString());
+                }
+            }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new PersistenceException("Failed to add to search results", e);
+        }
+
+        getSearchableValues(item, clazz.getSuperclass(), searchableValues);
+    }
+
     @Override
     public long getNextPersistenceId() {
         return persistenceId++;
@@ -81,35 +110,6 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService i
         }
 
         return result;
-    }
-
-    private static void getSearchableValues(Object item, Class<?> clazz, Map<String, String> searchableValues)
-            throws PersistenceException {
-        if (clazz == null || clazz.equals(Object.class)) {
-            return;
-        }
-
-        try {
-            for (Field field : clazz.getDeclaredFields()) {
-                field.setAccessible(true);
-                if (field.isAnnotationPresent(Searchable.class)) {
-                    Searchable searchable = field.getDeclaredAnnotation(Searchable.class);
-                    searchableValues.put(searchable.value(), field.get(item).toString());
-                } else if (PersistenceService.isPersistable(field)) {
-                    getSearchableValues(field.get(item), field.getType(), searchableValues);
-                }
-            }
-            for (Method method : clazz.getMethods()) {
-                if (method.isAnnotationPresent(Searchable.class)) {
-                    Searchable searchable = method.getDeclaredAnnotation(Searchable.class);
-                    searchableValues.put(searchable.value(), method.invoke(item).toString());
-                }
-            }
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new PersistenceException("Failed to add to search results", e);
-        }
-
-        getSearchableValues(item, clazz.getSuperclass(), searchableValues);
     }
 
     @Override

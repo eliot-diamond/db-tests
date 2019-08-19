@@ -15,22 +15,12 @@ import java.util.Map;
 
 public abstract class AbstractPersistenceService implements PersistenceService, VisitServiceListener {
 
-    protected enum SaveAction {doNotSave, updateCurrent, createNewInstance}
-
     JsonSerialisationFactory jsonSerialisationFactory;
     private String currentVisitId;
-
     AbstractPersistenceService(JsonSerialisationFactory jsonSerialisationFactory, VisitService visitService) {
         this.currentVisitId = visitService.getCurrentVisitId();
         this.jsonSerialisationFactory = jsonSerialisationFactory;
     }
-
-    @Override
-    public void currentVisitUpdated(String newVisitId) {
-        currentVisitId = newVisitId;
-    }
-
-    protected abstract long getNextPersistenceId();
 
     private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem, Class<?> clazz,
                                                   SaveAction saveAction) throws PersistenceException {
@@ -69,6 +59,13 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
 
         return calculateChangeType(item, archivedItem, itemClass, saveAction);
     }
+
+    @Override
+    public void currentVisitUpdated(String newVisitId) {
+        currentVisitId = newVisitId;
+    }
+
+    protected abstract long getNextPersistenceId();
 
     protected abstract ItemContainer getActive(long persistenceId, String visitId);
 
@@ -139,7 +136,6 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
         throw new PersistenceException("No item found width id of " + itemReference.getId() + " for visit " + visitId);
     }
 
-
     @Override
     public <T extends PersistableItem> T get(long persistenceId, Class<T> clazz) throws PersistenceException {
         JsonDeserialiser jsonDeserialiser = jsonSerialisationFactory.getJsonDeserialiser(this, currentVisitId);
@@ -166,4 +162,6 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
         }
         throw new PersistenceException("No item found width id of " + persistenceId + " and version " + version);
     }
+
+    protected enum SaveAction {doNotSave, updateCurrent, createNewInstance}
 }
