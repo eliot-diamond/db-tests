@@ -20,6 +20,8 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
     AbstractPersistenceService(JsonSerialisationFactory jsonSerialisationFactory, VisitService visitService) {
         this.currentVisitId = visitService.getCurrentVisitId();
         this.jsonSerialisationFactory = jsonSerialisationFactory;
+
+        visitService.addListener(this);
     }
 
     private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem, Class<?> clazz,
