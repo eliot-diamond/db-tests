@@ -37,6 +37,7 @@ public abstract class PersistenceManagementServiceTest {
         assertEquals("Names should be the same", itemA2.getName(), itemA3.getName());
     }
 
+    @Test
     public void copySimpleItemBetweenVisits() throws PersistenceException {
         visitService.setCurrentVisitId(FIRST_VISIT);
 

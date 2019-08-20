@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ItemContainer extends ItemReference {
     @JsonProperty
@@ -67,5 +68,22 @@ public class ItemContainer extends ItemReference {
     @JsonIgnore
     public String getVisitId() {
         return visitId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o instanceof ItemContainer) {
+            if (visitId.equals(((ItemContainer) o).visitId)) {
+                return super.equals(o);
+            }
+            return false;
+        }
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(visitId, super.hashCode());
     }
 }
