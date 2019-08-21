@@ -8,6 +8,7 @@ import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
+
 public class ConcreteItemA extends AbstractItem {
 
     public static final String CLASS_UNIQUE_FIELD = "uniqueProperty";
