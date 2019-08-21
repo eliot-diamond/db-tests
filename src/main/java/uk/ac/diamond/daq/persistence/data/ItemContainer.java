@@ -52,7 +52,7 @@ public class ItemContainer extends ItemReference {
     }
 
     @JsonProperty("classNames")
-    private List<String> getClassNames() {
+    public List<String> getClassNames() {
         List<String> classNames = new ArrayList<>();
         for (Class<?> clazz : classes) {
             classNames.add(clazz.getCanonicalName());
