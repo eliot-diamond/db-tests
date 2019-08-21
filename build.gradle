@@ -18,6 +18,8 @@ repositories {
 dependencies {
     compile group: 'org.springframework.data', name: 'spring-data-mongodb', version: '2.1.9.RELEASE'
     compile group: 'com.google.guava', name: 'guava', version: '14.0'
+    compile group: 'org.neo4j', name: 'neo4j-ogm-bolt-driver', version: '3.1.12'
+    compile group: 'org.neo4j', name: 'neo4j-ogm-core', version: '3.1.12'
     compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: '2.9.3'
     testCompile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.26'
     implementation 'org.neo4j.driver:neo4j-java-driver:1.7.5'
