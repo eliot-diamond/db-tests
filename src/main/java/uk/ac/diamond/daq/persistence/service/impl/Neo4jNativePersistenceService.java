@@ -6,7 +6,6 @@ import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.PersistenceService;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
 import uk.ac.diamond.daq.persistence.service.VisitService;
-import uk.ac.diamond.daq.persistence.service.neonative.PersistableItemService;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;

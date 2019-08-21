@@ -37,7 +37,7 @@ public class ItemContainer extends ItemReference {
     public ItemContainer(ItemContainer itemContainer, long version, String visitId) {
         super(itemContainer);
 
-        payload = itemContainer.payload;
+        this.payload = itemContainer.payload;
         this.version = version;
         this.visitId = visitId;
     }
