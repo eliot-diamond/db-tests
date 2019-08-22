@@ -1,33 +1,31 @@
 package uk.ac.diamond.daq.persistence.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Transient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Persisted;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@NodeEntity
 public class ConcreteListContainer extends PersistableItem {
+    @Transient
     private static final Logger log = LoggerFactory.getLogger(ConcreteListContainer.class);
 
-    @Persisted(key = true)
-    @Searchable("name")
-    @Listable("Name")
+
     private String name;
 
-    @Persisted
     private List<AbstractItemContainer> abstractItemContainers;
 
-    @JsonCreator
-    public ConcreteListContainer(@JsonProperty("name") String name) {
+
+    public ConcreteListContainer(String name) {
+        super();
         this.name = name;
 
         abstractItemContainers = new ArrayList<>();
     }
+
+    public ConcreteListContainer(){}
 
     public String getName() {
         return name;
@@ -35,6 +33,7 @@ public class ConcreteListContainer extends PersistableItem {
 
     public void addTrigger(AbstractItemContainer abstractItemContainer) {
         abstractItemContainers.add(abstractItemContainer);
+        abstractItemContainer.setHolder(this);
     }
 
     public List<AbstractItemContainer> getAbstractItemContainers() {
@@ -48,4 +47,14 @@ public class ConcreteListContainer extends PersistableItem {
             abstractItemContainer.execute();
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ConcreteListContainer that = (ConcreteListContainer) o;
+        return (that.getName().equals(this.getName()) && that.getAbstractItemContainers().equals(this.getAbstractItemContainers()));
+    }
+
 }

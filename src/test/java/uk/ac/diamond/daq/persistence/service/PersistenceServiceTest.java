@@ -65,11 +65,11 @@ public abstract class PersistenceServiceTest {
         final ConcreteItemA unsavedItem = new ConcreteItemA("Diff 1", 0, 0, "Coffee");
 
         // When object is first created, its id should be set to an invalid value
-        assertEquals("Invalid ID must be set", PersistableItem.INVALID_ID, unsavedItem.getId());
+        assertEquals("Invalid ID must be set", null, unsavedItem.getId());
 
         // When persisted, the id should be updated to a valid value
         persistenceService.save(unsavedItem);
-        assertNotEquals("Valid ID must be set", PersistableItem.INVALID_ID, unsavedItem.getId());
+        assertNotEquals("Valid ID must be set", null, unsavedItem.getId());
     }
 
     /**
@@ -583,7 +583,7 @@ public abstract class PersistenceServiceTest {
         assertNotEquals("Item should be saved and therefore note a version increase when its container is saved", 0, concreteItemB.getVersion());
 
         final AbstractItemContainer retrievedOriginal = persistenceService.get(trigger1.getId(), AbstractItemContainer.class);
-        assertEquals("Ought to retrieve latest version of item in container", concreteItemB.getVersion(), retrievedOriginal.getAbstractItem().getVersion());
+        assertEquals("Ought to retrieve latest version of item in container", concreteItemB.getVersion(), retrievedOriginal.getValue().getVersion());
 
     }
 
@@ -610,10 +610,10 @@ public abstract class PersistenceServiceTest {
         ConcreteListContainer retrievedListContainer = persistenceService.get(concreteListContainer1.getId(), ConcreteListContainer.class);
 
         assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newContainerName", retrievedListContainer.getAbstractItemContainers().get(1).getName());
-        assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newItem", retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getName());
+        assertEquals("Saving a container should save all it contains and retrieving one should get the latest version", "newItem", ((ConcreteItemB) retrievedListContainer.getAbstractItemContainers().get(0).getValue()).getName());
         assertSame("Should be same items as both Triggers use ConcreteB should retrieve latest for both",
-                retrievedListContainer.getAbstractItemContainers().get(0).getAbstractItem(),
-                retrievedListContainer.getAbstractItemContainers().get(1).getAbstractItem());
+                retrievedListContainer.getAbstractItemContainers().get(0).getValue(),
+                retrievedListContainer.getAbstractItemContainers().get(1).getValue());
     }
 
     @Test
@@ -634,10 +634,10 @@ public abstract class PersistenceServiceTest {
         AbstractItemContainer retrivedContainer = persistenceService.get(trigger2.getId(), AbstractItemContainer.class);
         ConcreteListContainer retrivedListContainer = persistenceService.get(concreteListContainer1.getId(), ConcreteListContainer.class);
 
-        assertEquals("Persisting a container did not persist the contained", "toBeFound", retrivedContainer.getAbstractItem().getName());
+        assertEquals("Persisting a container did not persist the contained", "toBeFound", ((AbstractItemContainer) retrivedContainer.getValue()).getName());
         assertEquals("Persisting a container did not persist the nested container", "thisChanged", retrivedListContainer.getAbstractItemContainers().get(0).getName());
 
-        assertEquals("Persisting Container A which contained Container B which contained Item C did not persist Item C", "toBeFound", retrivedListContainer.getAbstractItemContainers().get(0).getAbstractItem().getName());
+        assertEquals("Persisting Container A which contained Container B which contained Item C did not persist Item C", "toBeFound", ((ConcreteItemB) retrivedListContainer.getAbstractItemContainers().get(0).getValue()).getName());
     }
 
     @Test
@@ -657,7 +657,7 @@ public abstract class PersistenceServiceTest {
         assertNotNull("Failed to find Plan " + concreteListContainer2.getName());
         assertNotSame("Retrieved plan should have new reference", concreteListContainer1, concreteListContainer2);
         assertEquals("Trigger 1 wasn't persisted in the plan", abstractItemContainer1, concreteListContainer2.getAbstractItemContainers().get(0));
-        assertEquals("Trigger 1 Scan wasn't persisted in the plan", concreteItemB, concreteListContainer2.getAbstractItemContainers().get(0).getAbstractItem());
+        assertEquals("Trigger 1 Scan wasn't persisted in the plan", concreteItemB, concreteListContainer2.getAbstractItemContainers().get(0).getValue());
     }
 
     /**
@@ -876,8 +876,8 @@ public abstract class PersistenceServiceTest {
         ConcreteListContainer retrievedContainer = persistenceService.get(superContainer.getId(), ConcreteListContainer.class);
 
         assertNotSame("Deserialised 2 identical but distinct items as the same item",
-                retrievedContainer.getAbstractItemContainers().get(0).getAbstractItem(),
-                retrievedContainer.getAbstractItemContainers().get(1).getAbstractItem());
+                retrievedContainer.getAbstractItemContainers().get(0).getValue());
+                retrievedContainer.getAbstractItemContainers().get(1).getValue();
         assertNotEquals("Two items written to same ID", concreteItemC_2, concreteItemC);
 
     }

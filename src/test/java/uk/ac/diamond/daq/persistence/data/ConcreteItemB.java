@@ -1,36 +1,30 @@
 package uk.ac.diamond.daq.persistence.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Transient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Persisted;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 import java.util.Objects;
 
+@NodeEntity
 public class ConcreteItemB extends AbstractItem {
+    @Transient
     private static final Logger log = LoggerFactory.getLogger(ConcreteItemB.class);
 
-    @Persisted
-    @Listable("Property 1")
-    @Searchable("property1")
-    private int property1;
 
-    @Persisted
-    @Listable("Property 3")
-    @Searchable("property3")
+    private int property1;
     private double property3;
 
-    @JsonCreator
-    public ConcreteItemB(@JsonProperty("name") String name, @JsonProperty("property1") int property1,
-                         @JsonProperty("property3") double property3) {
+    public ConcreteItemB(String name, int property1,
+                         double property3) {
         super(name);
 
         this.property1 = property1;
         this.property3 = property3;
     }
+
+    public ConcreteItemB(){}
 
     public double getProperty3() {
         return property3;

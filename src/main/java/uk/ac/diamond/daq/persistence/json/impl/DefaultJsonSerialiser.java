@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.data.ItemReference;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.json.JsonSerialiser;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
@@ -137,7 +138,7 @@ public class DefaultJsonSerialiser implements JsonSerialiser {
     }
 
     @Override
-    public String serialise(PersistableItem item) throws PersistenceException {
+    public String serialise(Persistable item) throws PersistenceException {
         try {
             ObjectNode baseNode = objectMapper.valueToTree(item);
             serializeObject(baseNode, item);

@@ -2,6 +2,7 @@ package uk.ac.diamond.daq.persistence.service.impl;
 
 import org.neo4j.ogm.session.Session;
 import uk.ac.diamond.daq.persistence.data.ItemContainer;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 import uk.ac.diamond.daq.persistence.service.SearchResult;
@@ -10,15 +11,23 @@ import java.util.*;
 
 public interface Neo4jUtil {
 
-    default String generateCypherString(HashMap<String, Object> searchParameters) {
-        String baseString = "MATCH (n)";
+    default String generateCypherString(HashMap<String, Object> searchParameters, ArrayList<String> labels) {
+        String baseString = "MATCH (n";
+        for (String label : labels){
+            baseString = baseString.concat(":"+label);
+        }
+        baseString = baseString.concat(")");
         if (searchParameters.size() > 0) {
             baseString = baseString.concat(" WHERE ");
         }
         Iterator keyIterator = searchParameters.entrySet().iterator();
         while (keyIterator.hasNext()) {
             Map.Entry kvPair = (Map.Entry) keyIterator.next();
-            baseString = baseString.concat(" n." + kvPair.getKey());
+            if (kvPair.getKey().equals("persistenceId") || kvPair.getKey().equals("id")) {
+                baseString = baseString.concat("ID(n)");
+            } else {
+                baseString = baseString.concat(" n." + kvPair.getKey());
+            }
             if (!kvPair.getValue().toString().contains("CONTAINS")) {
                 baseString = baseString.concat(" = $" + kvPair.getKey());
             } else {
@@ -33,13 +42,13 @@ public interface Neo4jUtil {
     }
 
     default String generateCypherString(HashMap<String, Object> query, String suffixQualifier) {
-        return generateCypherString(query) + suffixQualifier;
+        return generateCypherString(query, new ArrayList<String>()) + suffixQualifier;
     }
 
-    default <T extends PersistableItem> SearchResult formatSearchResults(Iterable<T> collect) throws PersistenceException {
+    default <T extends Persistable> SearchResult formatSearchResults(Iterable<T> collect) throws PersistenceException {
         SearchResult results = new SearchResult();
         for (T item : collect) {
-            results.addResult(item);
+            results.addResult((PersistableItem) item);
         }
         return results;
     }

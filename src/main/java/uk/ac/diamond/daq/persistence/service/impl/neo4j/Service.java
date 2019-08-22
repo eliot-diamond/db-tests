@@ -1,9 +1,9 @@
 package uk.ac.diamond.daq.persistence.service.impl.neo4j;
 
-import uk.ac.diamond.daq.persistence.data.PersistableItem;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 
-public interface Service<T extends PersistableItem> {
+public interface Service<T extends Persistable> {
 
     Iterable<T> findAll();
 

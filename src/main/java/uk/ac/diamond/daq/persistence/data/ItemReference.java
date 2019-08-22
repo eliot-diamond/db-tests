@@ -3,16 +3,17 @@ package uk.ac.diamond.daq.persistence.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.neo4j.ogm.annotation.NodeEntity;
 
 import java.util.Objects;
-
+@NodeEntity
 public class ItemReference {
     @JsonProperty
     long version;
     @JsonProperty
     private long id;
     @JsonIgnore
-    private Class<? extends PersistableItem> itemClass;
+    private Class<? extends Persistable> itemClass;
 
     @SuppressWarnings("unchecked")
     @JsonCreator
@@ -20,10 +21,10 @@ public class ItemReference {
                             @JsonProperty("itemClass") String className) throws ClassNotFoundException {
         this.id = id;
         this.version = version;
-        itemClass = (Class<? extends PersistableItem>) Class.forName(className);
+        itemClass = (Class<? extends Persistable>) Class.forName(className);
     }
 
-    public ItemReference(long id, long version, Class<? extends PersistableItem> itemClass) {
+    public ItemReference(long id, long version, Class<? extends Persistable> itemClass) {
         this.id = id;
         this.version = version;
         this.itemClass = itemClass;
@@ -35,7 +36,7 @@ public class ItemReference {
         itemClass = itemReference.itemClass;
     }
 
-    public ItemReference(PersistableItem item) {
+    public ItemReference(Persistable item) {
         id = item.getId();
         version = item.getVersion();
         itemClass = item.getClass();
@@ -54,7 +55,7 @@ public class ItemReference {
     }
 
     @JsonProperty
-    public Class<? extends PersistableItem> getItemClass() {
+    public Class<? extends Persistable> getItemClass() {
         return itemClass;
     }
 

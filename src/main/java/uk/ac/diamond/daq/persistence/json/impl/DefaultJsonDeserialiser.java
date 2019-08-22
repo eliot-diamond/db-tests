@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import uk.ac.diamond.daq.persistence.data.ItemContainer;
 import uk.ac.diamond.daq.persistence.data.ItemReference;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.json.JsonDeserialiser;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
@@ -21,7 +22,7 @@ import java.util.Map;
 public class DefaultJsonDeserialiser implements JsonDeserialiser {
     private ObjectMapper objectMapper;
     private AbstractPersistenceService persistenceService;
-    private List<PersistableItem> cache;
+    private List<Persistable> cache;
     private String visitId;
 
     DefaultJsonDeserialiser(AbstractPersistenceService persistenceService, String visitId) {
@@ -31,11 +32,11 @@ public class DefaultJsonDeserialiser implements JsonDeserialiser {
         this.visitId = visitId;
     }
 
-    private PersistableItem getPersistableItemFromJsonNode(JsonNode node) throws PersistenceException {
+    private Persistable getPersistableItemFromJsonNode(JsonNode node) throws PersistenceException {
         if (node instanceof ObjectNode) {
             try {
                 ItemReference itemReference = objectMapper.treeToValue(node, ItemReference.class);
-                for (PersistableItem item : cache) {
+                for (Persistable item : cache) {
                     if (item.getId() == itemReference.getId()) {
                         return item;
                     }
@@ -58,7 +59,7 @@ public class DefaultJsonDeserialiser implements JsonDeserialiser {
             JsonNode arrayItemNode = iterator.next();
             if (arrayItemNode instanceof ObjectNode) {
                 ObjectPath childObjectPath = new ObjectPath(objectPath, i);
-                PersistableItem fieldItem = getPersistableItemFromJsonNode(arrayItemNode);
+                Persistable fieldItem = getPersistableItemFromJsonNode(arrayItemNode);
                 if (fieldItem != null) {
                     childObjectPath.setItem(fieldItem);
                     objectPaths.add(childObjectPath);
@@ -87,7 +88,7 @@ public class DefaultJsonDeserialiser implements JsonDeserialiser {
 
             if (childNode instanceof ObjectNode) {
                 ObjectPath childObjectPath = new ObjectPath(objectPath, entry.getKey());
-                PersistableItem fieldItem = getPersistableItemFromJsonNode(entry.getValue());
+                Persistable fieldItem = getPersistableItemFromJsonNode(entry.getValue());
                 if (fieldItem != null) {
                     childObjectPath.setItem(fieldItem);
                     objectPaths.add(childObjectPath);
@@ -103,8 +104,8 @@ public class DefaultJsonDeserialiser implements JsonDeserialiser {
     }
 
     @Override
-    public <T extends PersistableItem> T deserialise(ItemContainer itemContainer) throws PersistenceException {
-        for (PersistableItem item : cache) {
+    public <T extends Persistable> T deserialise(ItemContainer itemContainer) throws PersistenceException {
+        for (Persistable item : cache) {
             if (item.getId() == itemContainer.getId()) {
                 return (T) item;
             }
@@ -129,7 +130,7 @@ public class DefaultJsonDeserialiser implements JsonDeserialiser {
     }
 
     @Override
-    public List<PersistableItem> getCache() {
+    public List<Persistable> getCache() {
         return cache;
     }
 }

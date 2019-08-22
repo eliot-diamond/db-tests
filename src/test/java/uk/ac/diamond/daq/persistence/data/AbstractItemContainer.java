@@ -1,21 +1,20 @@
 package uk.ac.diamond.daq.persistence.data;
 
-import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Persisted;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
+public abstract class AbstractItemContainer extends MapHolder {
 
-public abstract class AbstractItemContainer extends PersistableItem {
     public static final String CONTAINER_NAME = "name";
-    @Persisted
-    private AbstractItem abstractItem;
-    @Persisted(key = true)
-    @Searchable(CONTAINER_NAME)
-    @Listable("Name")
+
     private String name;
 
-    AbstractItemContainer(String name, AbstractItem abstractItem) {
+    protected AbstractItemContainer(String name, AbstractItem abstractItem, PersistableItem holder) {
+        super(name, abstractItem, holder);
         this.name = name;
-        this.abstractItem = abstractItem;
+    }
+
+    AbstractItemContainer(){}
+
+    public AbstractItemContainer(String name, AbstractItem abstractItem) {
+        super (name, abstractItem);
     }
 
     public String getName() {
@@ -26,14 +25,6 @@ public abstract class AbstractItemContainer extends PersistableItem {
         this.name = newName;
     }
 
-    public AbstractItem getAbstractItem() {
-        return abstractItem;
-    }
-
-    public void setAbstractItem(AbstractItem theItem) {
-        this.abstractItem = theItem;
-    }
-
     public abstract void execute();
 
     @Override
@@ -42,8 +33,6 @@ public abstract class AbstractItemContainer extends PersistableItem {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         AbstractItemContainer that = (AbstractItemContainer) o;
-        return (that.name.equals(this.name)
-                && that.getAbstractItem().getName().equals(this.getAbstractItem().getName())
-                && that.getAbstractItem().getVersion() == this.getAbstractItem().getVersion());
+        return (that.name.equals(this.name));
     }
 }

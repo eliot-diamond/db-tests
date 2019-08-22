@@ -1,34 +1,34 @@
 package uk.ac.diamond.daq.persistence.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Transient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Persisted;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@NodeEntity
+
 public class ConcreteMapContainer extends PersistableItem {
+    @Transient
     private static final Logger log = LoggerFactory.getLogger(ConcreteMapContainer.class);
 
-    @Persisted(key = true)
-    @Listable("Name")
-    @Searchable("name")
+
     private String name;
 
-    @Persisted
-    @JsonProperty
+
     private Map<String, AbstractItem> map;
 
-    @JsonCreator
-    public ConcreteMapContainer(@JsonProperty("name") String name) {
+
+    public ConcreteMapContainer(String name) {
+        super();
         this.name = name;
 
         map = new HashMap<>();
     }
+
+    public ConcreteMapContainer(){}
 
     public AbstractItem getItem(String key) {
         return map.get(key);
@@ -36,6 +36,10 @@ public class ConcreteMapContainer extends PersistableItem {
 
     public String getName() {
         return name;
+    }
+
+    public Map<String, AbstractItem> getMap(){
+        return this.map;
     }
 
     public void addItem(String name, AbstractItem item) {
@@ -49,5 +53,14 @@ public class ConcreteMapContainer extends PersistableItem {
             log.info("Executing: {}", key);
             item.execute();
         });
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ConcreteMapContainer that = (ConcreteMapContainer) o;
+        return (that.getName().equals(this.getName()) && that.getMap().equals(this.getMap()));
     }
 }

@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
 import uk.ac.diamond.daq.persistence.data.ItemContainer;
-import uk.ac.diamond.daq.persistence.data.PersistableItem;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.json.JsonDeserialiser;
 import uk.ac.diamond.daq.persistence.json.JsonSerialisationFactory;
 import uk.ac.diamond.daq.persistence.service.*;
@@ -98,7 +98,7 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService i
     }
 
     @Override
-    public <T extends PersistableItem> SearchResult get(Class<T> clazz, String visitId) throws PersistenceException {
+    public <T extends Persistable> SearchResult get(Class<T> clazz, String visitId) throws PersistenceException {
         SearchResult result = new SearchResult();
 
         JsonDeserialiser jsonDeserialiser = jsonSerialisationFactory.getJsonDeserialiser(this, visitId);
@@ -113,14 +113,14 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService i
     }
 
     @Override
-    public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz,
+    public <T extends Persistable> SearchResult get(Map<String, String> searchParameters, Class<T> clazz,
                                                         String visitId) throws PersistenceException {
         SearchResult results = new SearchResult();
 
         JsonDeserialiser jsonDeserialiser = jsonSerialisationFactory.getJsonDeserialiser(this, visitId);
         for (ItemContainer itemContainer : activeItems) {
             if (clazz.isAssignableFrom(itemContainer.getItemClass()) && visitId.equals(itemContainer.getVisitId())) {
-                PersistableItem item = jsonDeserialiser.deserialise(itemContainer);
+                Persistable item = jsonDeserialiser.deserialise(itemContainer);
                 Map<String, String> searchableValues = new HashMap<>();
                 getSearchableValues(item, item.getClass(), searchableValues);
                 searchParameters.forEach((key, value) -> {
@@ -173,7 +173,7 @@ public class InMemoryJsonPersistenceService extends AbstractPersistenceService i
 
         jsonDeserialiser.deserialise(itemContainer);
 
-        for (PersistableItem item : jsonDeserialiser.getCache()) {
+        for (Persistable item : jsonDeserialiser.getCache()) {
             ItemContainer fromItemContainer = getActive(item.getId(), fromVisitId);
             ItemContainer toItemContainer = getActive(item.getId(), toVisitId);
 

@@ -1,6 +1,6 @@
 package uk.ac.diamond.daq.persistence.json.impl;
 
-import uk.ac.diamond.daq.persistence.data.PersistableItem;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.service.PersistenceException;
 
 import java.lang.reflect.Field;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 class ObjectPath {
     private List<PathElement> path;
-    private PersistableItem fieldItem;
+    private Persistable fieldItem;
 
     ObjectPath() {
         path = new ArrayList<>();
@@ -49,11 +49,11 @@ class ObjectPath {
         path.add(pathElement);
     }
 
-    void setItem(PersistableItem item) {
+    void setItem(Persistable item) {
         this.fieldItem = item;
     }
 
-    void applyTo(PersistableItem item) throws PersistenceException, IllegalAccessException {
+    void applyTo(Persistable item) throws PersistenceException, IllegalAccessException {
         Object lastObject = item;
         Iterator<PathElement> iterator = path.iterator();
         while (iterator.hasNext()) {

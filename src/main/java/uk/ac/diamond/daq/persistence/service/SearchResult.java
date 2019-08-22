@@ -2,7 +2,7 @@ package uk.ac.diamond.daq.persistence.service;
 
 import uk.ac.diamond.daq.persistence.annotation.Listable;
 import uk.ac.diamond.daq.persistence.annotation.Searchable;
-import uk.ac.diamond.daq.persistence.data.PersistableItem;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -45,12 +45,12 @@ public class SearchResult {
         }
 
         Class<?> parent = clazz.getSuperclass();
-        if (parent != null && !parent.equals(PersistableItem.class)) {
+        if (parent != null && !parent.equals(Persistable.class)) {
             add(object, parent, values);
         }
     }
 
-    public void addResult(PersistableItem item) throws PersistenceException {
+    public void addResult(Persistable item) throws PersistenceException {
         try {
             Map<SearchResultHeading, String> values = new HashMap<>();
             add(item, item.getClass(), values);

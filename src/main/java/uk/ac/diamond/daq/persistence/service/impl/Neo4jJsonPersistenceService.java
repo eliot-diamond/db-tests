@@ -6,6 +6,7 @@ import org.neo4j.ogm.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.diamond.daq.persistence.data.ItemContainer;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.data.PersistableItem;
 import uk.ac.diamond.daq.persistence.json.JsonSerialisationFactory;
 import uk.ac.diamond.daq.persistence.service.Neo4jSessionFactory;
@@ -34,7 +35,7 @@ public class Neo4jJsonPersistenceService extends AbstractPersistenceService impl
     protected Session session = Neo4jSessionFactory.getInstance().getNeo4jSession();
 
     @Override
-    protected <T extends PersistableItem> SearchResult get(Class<T> clazz, String visitId) throws PersistenceException {
+    protected <T extends Persistable> SearchResult get(Class<T> clazz, String visitId) throws PersistenceException {
         Map<String, String> query = new HashMap<>();
         return get(query, clazz, visitId);
     }
@@ -50,7 +51,7 @@ public class Neo4jJsonPersistenceService extends AbstractPersistenceService impl
     }
 
     @Override
-    protected <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz, String visitId) throws PersistenceException {
+    protected <T extends Persistable> SearchResult get(Map<String, String> searchParameters, Class<T> clazz, String visitId) throws PersistenceException {
         HashMap<String, Object> castMap = new HashMap<>();
         castMap.put("visitId", visitId);
         castMap.put("classes", " CONTAINS " + clazz.getSimpleName());
@@ -94,13 +95,11 @@ public class Neo4jJsonPersistenceService extends AbstractPersistenceService impl
 
     @Override
     protected ItemContainer getActive(long persistenceId, String visitId) {
-//        HashMap<String, Object> query = new HashMap<>();
-//        query.put("persistenceId", persistenceId);
-//        query.put("visitId", visitId);
-//        String qualifier = " RETURN n ORDER BY n.version LIMIT 1";
-//        ItemContainer toReturn = session.queryForObject(ItemContainer.class, generateCypherString(query, qualifier), query);
-//        System.out.print(toReturn.toString());
-        return null;
+        HashMap<String, Object> query = new HashMap<>();
+        query.put("persistenceId", persistenceId);
+        query.put("visitId", visitId);
+        String qualifier = " RETURN n ORDER BY n.version LIMIT 1";
+        return session.queryForObject(ItemContainer.class, generateCypherString(query, qualifier), query);
     }
 
     @Override

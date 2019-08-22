@@ -1,29 +1,22 @@
 package uk.ac.diamond.daq.persistence.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Transient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.diamond.daq.persistence.annotation.Listable;
-import uk.ac.diamond.daq.persistence.annotation.Persisted;
-import uk.ac.diamond.daq.persistence.annotation.Searchable;
 
-
+@NodeEntity
 public class ConcreteItemA extends AbstractItem {
 
     public static final String CLASS_UNIQUE_FIELD = "uniqueProperty";
+    @Transient
     private static final Logger log = LoggerFactory.getLogger(ConcreteItemA.class);
-    @Persisted
     private int property1;
-    @Persisted
     private int property2;
-    @Persisted
-    @Searchable(CLASS_UNIQUE_FIELD)
     private String property3 = CLASS_UNIQUE_FIELD;
 
-    @JsonCreator
-    public ConcreteItemA(@JsonProperty("name") String name, @JsonProperty("property1") int property1,
-                         @JsonProperty("property2") int property2, @JsonProperty("CLASS_UNIQUE_FIELD") String property3) {
+    public ConcreteItemA(String name, int property1,
+                         int property2, String property3) {
         super(name);
 
         this.property1 = property1;
@@ -31,17 +24,16 @@ public class ConcreteItemA extends AbstractItem {
         this.property3 = property3;
     }
 
-    @Listable(value = "Property 1", priority = 1)
+    public ConcreteItemA(){}
+
     public int getProperty1() {
         return property1;
     }
 
-    @Listable(value = "Property 2", priority = 2)
     public int getProperty2() {
         return property2;
     }
 
-    @Listable(value = CLASS_UNIQUE_FIELD, priority = 8)
     public String getProperty3() {
         return property3;
     }
@@ -50,5 +42,14 @@ public class ConcreteItemA extends AbstractItem {
     public void execute() {
         log.info("Executing ConcreteItemA {} (id: {}, version: {}) property1: {}, property2: {}, {}: {}", getName(), getId(),
                 getVersion(), property1, property2, CLASS_UNIQUE_FIELD, property3);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ConcreteItemA that = (ConcreteItemA) o;
+        return (that.getProperty1() == this.getProperty1() && that.getProperty2() == this.getProperty2() && that.getProperty3().equals(this.getProperty3()));
     }
 }

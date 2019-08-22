@@ -3,7 +3,7 @@ package uk.ac.diamond.daq.persistence.service.impl;
 import uk.ac.diamond.daq.persistence.annotation.Persisted;
 import uk.ac.diamond.daq.persistence.data.ItemContainer;
 import uk.ac.diamond.daq.persistence.data.ItemReference;
-import uk.ac.diamond.daq.persistence.data.PersistableItem;
+import uk.ac.diamond.daq.persistence.data.Persistable;
 import uk.ac.diamond.daq.persistence.json.JsonDeserialiser;
 import uk.ac.diamond.daq.persistence.json.JsonSerialisationFactory;
 import uk.ac.diamond.daq.persistence.json.JsonSerialiser;
@@ -24,7 +24,7 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
         visitService.addListener(this);
     }
 
-    private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem, Class<?> clazz,
+    private static SaveAction calculateChangeType(Persistable item, Persistable archivedItem, Class<?> clazz,
                                                   SaveAction saveAction) throws PersistenceException {
         try {
             for (Field field : clazz.getDeclaredFields()) {
@@ -49,7 +49,7 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
         return saveAction;
     }
 
-    private static SaveAction calculateChangeType(PersistableItem item, PersistableItem archivedItem) throws PersistenceException {
+    private static SaveAction calculateChangeType(Persistable item, Persistable archivedItem) throws PersistenceException {
         SaveAction saveAction = SaveAction.doNotSave;
 
         Class<?> itemClass = item.getClass();
@@ -75,7 +75,7 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
 
     protected abstract void saveToArchiveItems(ItemContainer itemContainer);
 
-    public void save(PersistableItem item, String visitId) throws PersistenceException {
+    public void save(Persistable item, String visitId) throws PersistenceException {
         if (item == null) {
             throw new PersistenceException("Cannot save null");
         }
@@ -108,28 +108,28 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
     }
 
     @Override
-    public void save(PersistableItem item) throws PersistenceException {
+    public void save(Persistable item) throws PersistenceException {
         save(item, currentVisitId);
     }
 
-    protected abstract <T extends PersistableItem> SearchResult get(Class<T> clazz, String visitId) throws PersistenceException;
+    protected abstract <T extends Persistable> SearchResult get(Class<T> clazz, String visitId) throws PersistenceException;
 
     @Override
-    public <T extends PersistableItem> SearchResult get(Class<T> clazz) throws PersistenceException {
+    public <T extends Persistable> SearchResult get(Class<T> clazz) throws PersistenceException {
         return get(clazz, currentVisitId);
     }
 
-    protected abstract <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters,
+    protected abstract <T extends Persistable> SearchResult get(Map<String, String> searchParameters,
                                                                     Class<T> clazz, String visitId)
             throws PersistenceException;
 
     @Override
-    public <T extends PersistableItem> SearchResult get(Map<String, String> searchParameters, Class<T> clazz)
+    public <T extends Persistable> SearchResult get(Map<String, String> searchParameters, Class<T> clazz)
             throws PersistenceException {
         return get(searchParameters, clazz, currentVisitId);
     }
 
-    public <T extends PersistableItem> T get(ItemReference itemReference, JsonDeserialiser jsonDeserialiser,
+    public <T extends Persistable> T get(ItemReference itemReference, JsonDeserialiser jsonDeserialiser,
                                              String visitId) throws PersistenceException {
         ItemContainer itemContainer = getActive(itemReference.getId(), visitId);
         if (itemContainer != null && itemReference.getItemClass().isAssignableFrom(itemContainer.getItemClass())) {
@@ -139,7 +139,7 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
     }
 
     @Override
-    public <T extends PersistableItem> T get(long persistenceId, Class<T> clazz) throws PersistenceException {
+    public <T extends Persistable> T get(long persistenceId, Class<T> clazz) throws PersistenceException {
         JsonDeserialiser jsonDeserialiser = jsonSerialisationFactory.getJsonDeserialiser(this, currentVisitId);
         return get(new ItemReference(persistenceId, -1, clazz), jsonDeserialiser, currentVisitId);
     }
@@ -154,7 +154,7 @@ public abstract class AbstractPersistenceService implements PersistenceService, 
     protected abstract ItemContainer getArchivedItem(long persistenceId, long version, String visitId);
 
     @Override
-    public <T extends PersistableItem> T getArchive(long persistenceId, long version, Class<T> clazz) throws PersistenceException {
+    public <T extends Persistable> T getArchive(long persistenceId, long version, Class<T> clazz) throws PersistenceException {
         ItemContainer itemContainer = getArchivedItem(persistenceId, version, currentVisitId);
         if (itemContainer != null && itemContainer.getVersion() == version) {
             if (clazz.isAssignableFrom(itemContainer.getItemClass())) {

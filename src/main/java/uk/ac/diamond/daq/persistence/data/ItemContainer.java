@@ -18,7 +18,7 @@ public class ItemContainer extends ItemReference {
     @JsonProperty
     private String visitId;
 
-    public ItemContainer(PersistableItem item, String payload, String visitId) {
+    public ItemContainer(Persistable item, String payload, String visitId) {
         super(item);
         this.payload = payload;
         this.visitId = visitId;
